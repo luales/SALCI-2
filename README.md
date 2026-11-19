@@ -329,3 +329,10 @@ C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak
 > SQL Server Express **no** soporta `BACKUP ... WITH COMPRESSION`.
 > La carpeta de respaldos requiere permisos de administrador para copiar
 > el archivo a otro medio.
+
+## 9. Evidencias y defensa
+
+- `docs/defensa.md`: guion de presentación, recorrido de demostración y
+  respuestas a las preguntas habituales de la defensa.
+- `docs/capturas/`: capturas del demo limpio (login, panel, POS y los CRUD).
+- `docs/MER-corregido.md` y `db/diagrama.dbml`: modelo y relaciones.

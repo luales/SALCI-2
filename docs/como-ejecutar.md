@@ -58,9 +58,10 @@ sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql
 
 - `01_schema.sql` crea la base `SALCI` si no existe y todas las tablas.
 - `02_seed.sql` carga los datos de demostración.
-- Si tu base ya existía con el esquema anterior, ejecuta **una sola vez**
-  `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql`:
-  agrega `productos.precio` sin borrar datos (necesario para el POS).
+- `01_schema.sql` ya incluye `productos.precio`, `productos.activo` y
+  `lotes.anulado`. Si tu base venía de una versión anterior, aplica una sola
+  vez las migraciones `05_migracion_pos.sql`, `06_migracion_productos_activo.sql`
+  y `07_migracion_lotes_anulado.sql` antes de cargar el seed.
 
 > **Aviso:** `02_seed.sql` borra los datos actuales y los reemplaza por los de
 > demo. No ejecutarlo si alguien ya cargó información que quiere conservar.
