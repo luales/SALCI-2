@@ -35,6 +35,8 @@ function render_barra(array $user, string $activo = ''): void
                 <?= $enlace('pos.php', 'Punto de venta', 'pos') ?>
                 <?= $enlace('reportes.php', 'Reportes', 'reportes') ?>
                 <?= $enlace('productos.php', 'Productos', 'productos') ?>
+                <?= $enlace('ingresos.php', 'Ingresos', 'ingresos') ?>
+                <?= $enlace('proveedores.php', 'Proveedores', 'proveedores') ?>
             </nav>
         </div>
         <div class="barra-der">

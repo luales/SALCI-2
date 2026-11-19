@@ -199,7 +199,7 @@ function csv_informe(PDO $pdo, string $tipo, int $sucursalId): array
                            MIN(l.fecha_ingreso) AS primera_entrega,
                            MAX(l.fecha_ingreso) AS ultima_entrega
                       FROM proveedores pr
-                      LEFT JOIN lotes l ON l.proveedor_id = pr.id
+                      LEFT JOIN lotes l ON l.proveedor_id = pr.id AND l.anulado = 0
                      GROUP BY pr.id, pr.rut, pr.nombre, pr.telefono, pr.email
                      ORDER BY unidades_ingresadas DESC';
             $params = [];

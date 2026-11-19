@@ -35,6 +35,7 @@ SALCI PHP/
 │  ├─ 04_backup.sql     respaldo .bak + verificación
 │  ├─ 05_migracion_pos.sql  agrega productos.precio a bases v3 ya creadas
 │  ├─ 06_migracion_productos_activo.sql  baja lógica de productos
+│  ├─ 07_migracion_lotes_anulado.sql     anulación de ingresos (RF04)
 │  └─ diagrama.dbml     modelo para dbdiagram.io (Figura 3)
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
@@ -61,6 +62,11 @@ SALCI PHP/
    ├─ producto_form.php    alta / edición / consulta
    ├─ producto_guardar.php INSERT/UPDATE con inventario por sucursal
    ├─ producto_estado.php  baja lógica (activo = 0)
+   ├─ proveedores.php      CRUD de contrapartes RF08 (1:N con lotes)
+   ├─ proveedor_guardar.php / proveedor_estado.php
+   ├─ ingresos.php         altas/ediciones/anulación de lotes RF04
+   ├─ ingreso_guardar.php  inserta lote + movimiento INGRESO
+   ├─ lote_anular.php      reversa stock con AJUSTE
    └─ assets/style.css     estilos
 ```
 
@@ -87,6 +93,7 @@ Si la base ya existía antes del POS (esquema v3), ejecutar una sola vez:
 ```bat
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\06_migracion_productos_activo.sql
+sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\07_migracion_lotes_anulado.sql
 ```
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
@@ -238,13 +245,21 @@ el OPERADOR solo consulta y ve el stock de su sucursal (RF11). El alta crea
 (`activo = 0`, migración 06) para no perder el historial de ventas y lotes.
 Los renglones con `stock <= stock_minimo` se pintan de rojo (RF10).
 
+### 6.4 Ingresos y proveedores (tabla 2, 1:N · RF04/RF08)
+
+`proveedores.php` mantiene RUT/nombre/teléfono/correo en su propia tabla y
+`ingresos.php` administra los lotes asociados. Un ingreso inserta el lote,
+incrementa `inventario` con bloqueo de fila y escribe un `INGRESO` en el
+kardex. Editar solo cambia metadatos; **Anular** revierte la cantidad con un
+movimiento `AJUSTE` y marca `lotes.anulado = 1`, sin destruir el historial.
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, POS, reportes y CSV; tabla 2 y N:N en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos y lotes/proveedores, POS, reportes y CSV; N:N en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 

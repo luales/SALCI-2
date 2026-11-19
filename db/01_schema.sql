@@ -189,6 +189,7 @@ CREATE TABLE lotes (
     cantidad      INT               NOT NULL,
     sucursal_id   INT               NOT NULL,
     fecha_ingreso DATETIME2(0)      NOT NULL CONSTRAINT df_lotes_fecha DEFAULT (SYSDATETIME()),
+    anulado       BIT               NOT NULL CONSTRAINT df_lotes_anulado DEFAULT (0),
     created_at    DATETIME2(0)      NOT NULL CONSTRAINT df_lotes_creat DEFAULT (SYSDATETIME()),
     created_by    NVARCHAR(50)      NULL,
     CONSTRAINT pk_lotes            PRIMARY KEY (id),
