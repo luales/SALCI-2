@@ -1,0 +1,204 @@
+// =====================================================================
+// SALCI v3 - Modelo fisico corregido (RF15 / RF08) y normalizado (3FN)
+// Pegar este archivo en https://dbdiagram.io  ->  Export PNG
+// Reemplaza la Figura 3 del informe (que mostraba solo 7 tablas).
+// =====================================================================
+
+Table sucursales {
+  id          int           [pk, increment]
+  nombre      nvarchar(120) [not null, unique]
+  direccion   nvarchar(200)
+  activa      bit           [not null, default: 1]
+  created_at  datetime2     [not null]
+  created_by  nvarchar(50)
+  updated_at  datetime2
+  updated_by  nvarchar(50)
+}
+
+Table usuarios {
+  id            int          [pk, increment]
+  username      nvarchar(50) [not null, unique]
+  password_hash char(64)     [not null, note: 'SHA-256 hexadecimal']
+  salt          char(32)     [not null, note: '16 bytes hexadecimales (RNF03)']
+  rol           varchar(15)  [not null, note: 'ADMIN | OPERADOR']
+  sucursal_id   int          [ref: > sucursales.id, note: 'NULL solo para ADMIN global']
+  activo        bit          [not null, default: 1]
+  created_at    datetime2    [not null]
+  created_by    nvarchar(50)
+  updated_at    datetime2
+  updated_by    nvarchar(50)
+
+  indexes {
+    sucursal_id
+  }
+}
+
+Table productos {
+  id           int           [pk, increment]
+  sku          nvarchar(30)  [not null, unique, note: 'clave de negocio global']
+  nombre       nvarchar(150) [not null]
+  stock_minimo int           [not null, default: 0, note: 'umbral global (RF10)']
+  created_at   datetime2     [not null]
+  created_by   nvarchar(50)
+  updated_at   datetime2
+  updated_by   nvarchar(50)
+}
+
+Table inventario {
+  id          int       [pk, increment]
+  producto_id int       [not null, ref: > productos.id]
+  sucursal_id int       [not null, ref: > sucursales.id]
+  stock       int       [not null, default: 0, note: 'CHECK stock >= 0']
+  created_at  datetime2 [not null]
+  created_by  nvarchar(50)
+  updated_at  datetime2 [not null]
+  updated_by  nvarchar(50)
+
+  indexes {
+    (producto_id, sucursal_id) [unique, name: 'uq_inventario_prod_suc']
+    sucursal_id
+  }
+}
+
+Table proveedores {
+  id         int           [pk, increment]
+  rut        nvarchar(12)  [note: 'opcional, unico cuando existe']
+  nombre     nvarchar(150) [not null]
+  telefono   nvarchar(30)
+  email      nvarchar(120)
+  activo     bit           [not null, default: 1]
+  created_at datetime2     [not null]
+  created_by nvarchar(50)
+  updated_at datetime2
+  updated_by nvarchar(50)
+
+  indexes {
+    rut [unique, name: 'ux_proveedores_rut', note: 'indice filtrado WHERE rut IS NOT NULL']
+  }
+}
+
+Table compradores {
+  id         int           [pk, increment]
+  rut        nvarchar(12)  [note: 'opcional, unico cuando existe']
+  nombre     nvarchar(150) [not null]
+  telefono   nvarchar(30)
+  email      nvarchar(120)
+  direccion  nvarchar(200)
+  activo     bit           [not null, default: 1]
+  created_at datetime2     [not null]
+  created_by nvarchar(50)
+  updated_at datetime2
+  updated_by nvarchar(50)
+
+  indexes {
+    rut [unique, name: 'ux_compradores_rut', note: 'indice filtrado WHERE rut IS NOT NULL']
+  }
+}
+
+Table lotes {
+  id            int           [pk, increment]
+  producto_id   int           [not null, ref: > productos.id]
+  proveedor_id  int           [ref: > proveedores.id, note: 'opcional (RF08)']
+  numero_lote   nvarchar(50)  [note: 'opcional (RF04)']
+  cantidad      int           [not null, note: 'CHECK cantidad > 0']
+  sucursal_id   int           [not null, ref: > sucursales.id]
+  fecha_ingreso datetime2     [not null]
+  created_at    datetime2     [not null]
+  created_by    nvarchar(50)
+
+  indexes {
+    (producto_id, fecha_ingreso)
+    proveedor_id
+  }
+}
+
+Table ventas {
+  id           int           [pk, increment]
+  sucursal_id  int           [not null, ref: > sucursales.id]
+  comprador_id int           [ref: > compradores.id, note: 'NULL = venta de mostrador']
+  usuario_id   int           [not null, ref: > usuarios.id, note: 'cajero que registra']
+  fecha        datetime2     [not null]
+  subtotal     decimal(12,2) [not null, default: 0]
+  iva          decimal(12,2) [not null, default: 0]
+  total        decimal(12,2) [not null, default: 0]
+  estado       varchar(12)   [not null, default: 'COMPLETADA', note: 'COMPLETADA | ANULADA']
+  created_at   datetime2     [not null]
+  created_by   nvarchar(50)
+  updated_at   datetime2
+  updated_by   nvarchar(50)
+
+  indexes {
+    (sucursal_id, fecha)
+    comprador_id
+  }
+}
+
+Table venta_detalle {
+  id              int           [pk, increment]
+  venta_id        int           [not null, ref: > ventas.id]
+  producto_id     int           [not null, ref: > productos.id]
+  cantidad        int           [not null, note: 'CHECK cantidad > 0']
+  precio_unitario decimal(12,2) [not null]
+  subtotal        decimal(12,2) [note: 'columna calculada: cantidad * precio_unitario']
+
+  indexes {
+    (venta_id, producto_id) [unique, name: 'uq_venta_detalle_linea']
+    producto_id
+  }
+}
+
+Table transacciones {
+  id               bigint      [pk, increment]
+  grupo_id         uuid        [note: 'agrupa el doble asiento de una transferencia']
+  tipo             varchar(25) [not null, note: 'INGRESO | SALIDA | TRANSFERENCIA_SALIDA | TRANSFERENCIA_INGRESO | AJUSTE']
+  producto_id      int         [not null, ref: > productos.id]
+  sucursal_id      int         [not null, ref: > sucursales.id]
+  cantidad         int         [not null, note: 'CHECK cantidad > 0']
+  stock_resultante int         [not null]
+  lote_id          int         [ref: > lotes.id, note: 'solo INGRESO']
+  venta_detalle_id int         [ref: > venta_detalle.id, note: 'solo SALIDA']
+  usuario_id       int         [not null, ref: > usuarios.id]
+  fecha            datetime2   [not null]
+
+  indexes {
+    (producto_id, fecha)
+    (sucursal_id, fecha)
+    venta_detalle_id
+  }
+}
+
+Table despachos_pendientes {
+  id             int           [pk, increment]
+  producto_id    int           [not null, ref: > productos.id]
+  sucursal_id    int           [not null, ref: > sucursales.id]
+  comprador_id   int           [not null, ref: > compradores.id]
+  venta_id       int           [ref: > ventas.id]
+  destino        nvarchar(200) [not null]
+  cantidad       int           [not null]
+  estado         varchar(12)   [not null, default: 'PENDIENTE', note: 'PENDIENTE | EN_RUTA | COMPLETADO | CANCELADO']
+  fecha_creacion datetime2     [not null]
+  fecha_entrega  datetime2
+  created_at     datetime2     [not null]
+  created_by     nvarchar(50)
+  updated_at     datetime2
+  updated_by     nvarchar(50)
+
+  indexes {
+    (sucursal_id, estado)
+  }
+}
+
+Table registro_alertas {
+  id               int           [pk, increment]
+  producto_id      int           [not null, ref: > productos.id]
+  sucursal_id      int           [not null, ref: > sucursales.id]
+  fecha            datetime2     [not null]
+  mensaje          nvarchar(300) [not null]
+  stock_al_momento int           [not null]
+  leida            bit           [not null, default: 0]
+  created_by       nvarchar(50)  [note: '"SISTEMA" para las automaticas']
+
+  indexes {
+    (sucursal_id, leida)
+  }
+}

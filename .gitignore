@@ -1,0 +1,22 @@
+# Sistema operativo
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Entorno local y credenciales
+.env
+*.local.php
+
+# Registros y temporales
+*.log
+*.tmp
+_preview*.html
+
+# Respaldos de base de datos
+backup/
+*.bak
+
+# Editores
+.vscode/
+.idea/
+*.swp
