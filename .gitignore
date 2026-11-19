@@ -6,6 +6,7 @@ desktop.ini
 # Entorno local y credenciales
 .env
 *.local.php
+app/config.local.php
 
 # Registros y temporales
 *.log

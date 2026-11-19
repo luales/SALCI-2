@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+
+/* ---------------------------------------------------------------------
+   Configuración local (no se sube a GitHub)
+   ---------------------------------------------------------------------
+   Copiar este archivo como config.local.php y descomentar lo que
+   corresponda. Solo se necesita si tu equipo no usa autenticación
+   de Windows o si la instancia tiene otro nombre.
+   --------------------------------------------------------------------- */
+
+/* Autenticación con usuario y clave de SQL Server */
+// define('DB_USER', 'salci_app');
+// define('DB_PASS', 'TuClaveSegura');
+
+/* Instancia con otro nombre o en otro equipo */
+// define('DB_DSN', 'sqlsrv:Server=MI_PC\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1');
+
+/* Mostrar errores detallados (útil en desarrollo, no en producción) */
+// define('APP_DEBUG', true);

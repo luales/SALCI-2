@@ -36,9 +36,11 @@ SALCI PHP/
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
 │  ├─ auditoria-3FN.md  auditoría formal de normalización
+│  ├─ como-ejecutar.md  guía para clonar y ejecutar en otro PC
 │  └─ capturas/         login, panel admin y panel trabajador
 └─ app/                    prototipo PHP
    ├─ config.php           DSN y parámetros
+   ├─ config.local.php.example  plantilla de configuración local
    ├─ db.php               conexión PDO única
    ├─ auth.php             sesión, hash y roles
    ├─ login.php            formulario de ingreso
@@ -67,6 +69,10 @@ sqlcmd -S .\SQLEXPRESS -E -C -i db\01_schema.sql
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
 Es útil antes de una presentación; no ejecutar sobre datos reales.
+
+> La base de datos no se versiona en Git: solo viajan los scripts. Cada
+> integrante ejecuta `01_schema.sql` y `02_seed.sql` en su propio SQL Server.
+> Guía completa para otro equipo: [`docs/como-ejecutar.md`](docs/como-ejecutar.md).
 
 ### 3.1 Abrir el prototipo
 
