@@ -71,6 +71,12 @@ SALCI PHP/
    ├─ despacho_guardar.php / despacho_estado.php
    ├─ transferencias.php   doble asiento inter-sucursal RF12
    ├─ transferencia_guardar.php
+   ├─ usuarios.php         CRUD de cuentas RF06 (último ADMIN protegido)
+   ├─ usuario_guardar.php / usuario_estado.php
+   ├─ sucursales.php       CRUD de sedes RF07 (eliminación restringida)
+   ├─ sucursal_guardar.php / sucursal_estado.php
+   ├─ ventas.php           CRUD de la tabla N:N (ventas + venta_detalle)
+   ├─ venta_anular.php     baja con reversa de stock y kardex
    └─ assets/style.css     estilos
 ```
 
@@ -206,6 +212,17 @@ $pdo = new PDO($dsn, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 > Tampoco incluir `CharacterSet` en el DSN: `pdo_sqlsrv` lo rechaza y
 > siempre trabaja en UTF-8.
 
+Constantes opcionales en `app/config.php` (o `config.local.php`):
+
+| Constante | Uso |
+|---|---|
+| `JWT_SECRET` | Clave HS256 del token RF05 (cambiar en producción). |
+| `RF02_EMAIL_DESTINO` | Correo que recibe alertas de stock crítico. |
+| `RF02_WEBHOOK_URL` | URL que recibe un `POST` JSON con la alerta. |
+
+Si las dos constantes RF02 quedan vacías, las alertas se guardan igual en
+`registro_alertas` y no se intenta envío externo.
+
 ## 6. Modelo de datos
 
 12 tablas: `sucursales`, `usuarios`, `productos`, `inventario`,
@@ -275,13 +292,29 @@ deshabilitar la propia cuenta ni al último ADMIN activo. `sucursales.php` da de
 alta, edita, deshabilita y elimina sedes; la eliminación se bloquea si hay
 usuarios, existencias o movimientos asociados.
 
+### 6.7 Ventas N:N, token RF05 y notificaciones RF02
+
+El alta de ventas se hace en el POS; `ventas.php` listado y
+`pos_ticket.php` dan la lectura, y `venta_anular.php` la baja lógica:
+reversa cada línea con un `AJUSTE`, actualiza el kardex y marca la venta
+`ANULADA`. No se permite anular dos veces.
+
+`auth.php` emite un JWT HS256 con `sub`, `usr`, `rol`, `suc` e `exp` a 24 h.
+`auth_require()` valida la firma antes de permitir el acceso; al vencer,
+cierra la sesión y muestra el aviso en `login.php`. El panel muestra la
+vigencia del token.
+
+Las alertas RF02 se envían **después del `COMMIT`** con correo/webhook
+mejor esfuerzo: si el destino falla, el movimiento de stock ya confirmado no
+se revierte.
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, lotes/proveedores, despachos, transferencias, usuarios y sucursales; POS, reportes y CSV; N:N en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login JWT, panel por rol, CRUD de productos, lotes/proveedores, despachos, transferencias, usuarios, sucursales y ventas N:N; POS, reportes y CSV) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 

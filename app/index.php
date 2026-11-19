@@ -6,6 +6,8 @@ require_once __DIR__ . '/partials.php';
 
 $user    = auth_require();
 $saludo  = rol_saludo($user['rol']);
+$claims  = auth_jwt_validar($_SESSION['access_token'] ?? null);
+$tokenExp = $claims !== null ? date('d/m/Y H:i', (int) $claims['exp']) : '—';
 
 /* Datos reales de la conexión, para demostrar que se llegó a SQL Server */
 $info    = db()->query("SELECT DB_NAME() AS base, @@VERSION AS version")->fetch();
@@ -53,6 +55,9 @@ $pendientes = (int) db()->query(
             <p class="acciones">
                 <a class="boton" href="pos.php">Abrir punto de venta</a>
                 <a class="btn-mini btn-secundario" href="reportes.php">Ver reportes</a>
+                <?php if ($user['rol'] === 'ADMIN'): ?>
+                    <a class="btn-mini btn-secundario" href="ventas.php">Ver ventas</a>
+                <?php endif; ?>
             </p>
         </section>
 
@@ -82,6 +87,8 @@ $pendientes = (int) db()->query(
                 <dd><?= e((string) db()->getAttribute(PDO::ATTR_DRIVER_NAME)) ?></dd>
                 <dt>Versión</dt>
                 <dd class="mono"><?= e($version) ?></dd>
+                <dt>Token RF05 (JWT HS256)</dt>
+                <dd class="mono">firmado · expira <?= e($tokenExp) ?></dd>
             </dl>
             <p class="nota">
                 Si ves esta pantalla, PHP está hablando con SQL Server y la

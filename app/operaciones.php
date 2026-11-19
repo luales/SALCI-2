@@ -301,6 +301,33 @@ function op_alerta_si_critico(
     ];
 }
 
+/** Notifica las alertas insertadas durante una transacción ya confirmada. */
+function op_notificar_alertas_nuevas(PDO $pdo, int $desdeId): void
+{
+    $st = $pdo->prepare(
+        'SELECT a.id, a.mensaje, a.stock_al_momento, a.created_by,
+                p.nombre AS producto, s.nombre AS sucursal,
+                p.stock_minimo AS minimo
+           FROM registro_alertas a
+           JOIN productos p ON p.id = a.producto_id
+           JOIN sucursales s ON s.id = a.sucursal_id
+          WHERE a.id > :desde
+          ORDER BY a.id'
+    );
+    $st->execute([':desde' => $desdeId]);
+
+    foreach ($st->fetchAll() as $alerta) {
+        op_notificar([
+            'producto' => (string) $alerta['producto'],
+            'sucursal' => (string) $alerta['sucursal'],
+            'mensaje'  => (string) $alerta['mensaje'],
+            'stock'    => (int) $alerta['stock_al_momento'],
+            'minimo'   => (int) $alerta['minimo'],
+            'usuario'  => (string) ($alerta['created_by'] ?: 'SISTEMA'),
+        ]);
+    }
+}
+
 /** Mejor esfuerzo: si falla correo/webhook NO se revierte la base de datos. */
 function op_notificar(array $alerta): void
 {

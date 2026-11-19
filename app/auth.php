@@ -91,11 +91,75 @@ function auth_attempt(string $username, string $password): ?array
     ];
 }
 
+/* ---------------------------------------------------------------------
+   JWT HS256 (RF05): rol y sucursal en el payload, vigencia 24 horas.
+   Se guarda dentro de la sesión PHP (HttpOnly + SameSite=Lax).
+   --------------------------------------------------------------------- */
+
+function auth_b64url(string $datos): string
+{
+    return rtrim(strtr(base64_encode($datos), '+/', '-_'), '=');
+}
+
+function auth_b64url_decode(string $datos): string
+{
+    $relleno = strlen($datos) % 4;
+    if ($relleno > 0) {
+        $datos .= str_repeat('=', 4 - $relleno);
+    }
+
+    return (string) base64_decode(strtr($datos, '-_', '+/'), true);
+}
+
+function auth_jwt_emitir(array $user): string
+{
+    $ahora = time();
+    $header = ['alg' => 'HS256', 'typ' => 'JWT'];
+    $payload = [
+        'sub' => (int) $user['id'],
+        'usr' => (string) $user['username'],
+        'rol' => (string) $user['rol'],
+        'suc' => (int) ($user['sucursal_id'] ?? 0),
+        'iat' => $ahora,
+        'exp' => $ahora + 86400,
+    ];
+
+    $sinFirma = auth_b64url((string) json_encode($header, JSON_UNESCAPED_SLASHES))
+        . '.' . auth_b64url((string) json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+    return $sinFirma . '.' . auth_b64url(hash_hmac('sha256', $sinFirma, JWT_SECRET, true));
+}
+
+function auth_jwt_validar(?string $token): ?array
+{
+    if (!is_string($token)) {
+        return null;
+    }
+
+    $partes = explode('.', $token);
+    if (count($partes) !== 3) {
+        return null;
+    }
+
+    $esperada = auth_b64url(hash_hmac('sha256', $partes[0] . '.' . $partes[1], JWT_SECRET, true));
+    if (!hash_equals($esperada, $partes[2])) {
+        return null;
+    }
+
+    $payload = json_decode(auth_b64url_decode($partes[1]), true);
+    if (!is_array($payload) || (int) ($payload['exp'] ?? 0) <= time()) {
+        return null;
+    }
+
+    return $payload;
+}
+
 function auth_login(array $user): void
 {
     app_session();
     session_regenerate_id(true);
     $_SESSION['user'] = $user;
+    $_SESSION['access_token'] = auth_jwt_emitir($user);
 }
 
 function auth_user(): ?array
@@ -132,6 +196,13 @@ function auth_require(): array
 
     if ($user === null) {
         header('Location: login.php');
+        exit;
+    }
+
+    /* RF05: el token firmado expira a las 24 h aunque la sesión siga viva. */
+    if (auth_jwt_validar($_SESSION['access_token'] ?? null) === null) {
+        auth_logout();
+        header('Location: login.php?expirado=1');
         exit;
     }
 

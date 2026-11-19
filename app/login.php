@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/auth.php';
 
 $error    = null;
+$aviso    = isset($_GET['expirado']) ? 'Tu acceso expiró (24 h). Inicia sesión nuevamente.' : null;
 $username = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -62,6 +63,8 @@ function e(string $s): string
 
         <?php if ($error !== null): ?>
             <p class="alerta" role="alert"><?= e($error) ?></p>
+        <?php elseif ($aviso !== null): ?>
+            <p class="alerta" role="status"><?= e($aviso) ?></p>
         <?php endif; ?>
 
         <form method="post" action="login.php" autocomplete="on" novalidate>

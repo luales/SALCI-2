@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/operaciones.php';
 require_once __DIR__ . '/partials.php';
 
 $user    = auth_require();
@@ -190,6 +191,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pids = array_keys($cart);
         sort($pids);
 
+        $alertaInicial = (int) $pdo->query(
+            'SELECT ISNULL(MAX(id), 0) FROM registro_alertas'
+        )->fetchColumn();
+
         $pdo->exec('SET XACT_ABORT ON');
         $pdo->beginTransaction();
 
@@ -367,6 +372,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             $pdo->commit();
+            /* RF02: correo/webhook después del COMMIT; un fallo no revierte la venta. */
+            try {
+                op_notificar_alertas_nuevas($pdo, $alertaInicial);
+            } catch (Throwable $e) {
+                error_log('SALCI RF02 notificación: ' . $e->getMessage());
+            }
         } catch (RuntimeException $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();

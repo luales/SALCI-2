@@ -33,3 +33,6 @@ defined('SESSION_NAME') || define('SESSION_NAME', 'salci_sid');
    Un fallo de red NUNCA revierte la transacción de stock. */
 defined('RF02_EMAIL_DESTINO') || define('RF02_EMAIL_DESTINO', '');
 defined('RF02_WEBHOOK_URL')   || define('RF02_WEBHOOK_URL', '');
+
+/* RF05: clave para firmar el JWT HS256 (24 h). Sobreescribir en producción. */
+defined('JWT_SECRET') || define('JWT_SECRET', 'SALCI-CAMBIAR-EN-PRODUCCION-2026');
