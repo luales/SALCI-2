@@ -99,6 +99,7 @@ try {
             throw new RuntimeException('No se pudo crear el lote.');
         }
 
+        op_asegurar_inventario($pdo, $producto, $sucursal, $user);
         op_mover_stock(
             $pdo, $producto, $sucursal, (int) $cantidad, 'INGRESO', $user, $loteId
         );

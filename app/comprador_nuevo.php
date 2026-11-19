@@ -8,7 +8,8 @@ $user = auth_require();
 $pdo  = db();
 
 $sucursalId = (int) ($_POST['sucursal_id'] ?? $_GET['sucursal_id'] ?? 0);
-$volver     = 'pos.php' . ($sucursalId > 0 ? '?sucursal_id=' . $sucursalId : '');
+$pedido     = (string) ($_POST['volver'] ?? $_GET['volver'] ?? '');
+$volver     = in_array($pedido, ['pos.php', 'despachos.php'], true) ? $pedido : 'pos.php';
 
 $error = null;
 $datos = [
@@ -62,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nuevoId = (int) $st->fetchColumn();
                 $st->closeCursor();
 
-                $destino = 'pos.php?comprador_id=' . $nuevoId
+                $destino = $volver . '?comprador_id=' . $nuevoId
                     . ($sucursalId > 0 ? '&sucursal_id=' . $sucursalId : '');
 
                 header('Location: ' . $destino);
@@ -113,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <form method="post" action="comprador_nuevo.php" novalidate>
                 <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                 <input type="hidden" name="sucursal_id" value="<?= $sucursalId ?>">
+                <input type="hidden" name="volver" value="<?= e($volver) ?>">
 
                 <label for="nombre">Nombre *</label>
                 <input id="nombre" name="nombre" type="text" maxlength="150" required
@@ -136,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="acciones-form">
                     <button type="submit" class="btn-guardar">Guardar comprador</button>
-                    <a class="btn-mini btn-secundario" href="<?= e($volver) ?>">Volver al POS</a>
+                    <a class="btn-mini btn-secundario" href="<?= e($volver) ?>">Volver</a>
                 </div>
             </form>
         </section>

@@ -67,6 +67,10 @@ SALCI PHP/
    ├─ ingresos.php         altas/ediciones/anulación de lotes RF04
    ├─ ingreso_guardar.php  inserta lote + movimiento INGRESO
    ├─ lote_anular.php      reversa stock con AJUSTE
+   ├─ despachos.php        CRUD de órdenes de entrega RF09
+   ├─ despacho_guardar.php / despacho_estado.php
+   ├─ transferencias.php   doble asiento inter-sucursal RF12
+   ├─ transferencia_guardar.php
    └─ assets/style.css     estilos
 ```
 
@@ -253,13 +257,22 @@ incrementa `inventario` con bloqueo de fila y escribe un `INGRESO` en el
 kardex. Editar solo cambia metadatos; **Anular** revierte la cantidad con un
 movimiento `AJUSTE` y marca `lotes.anulado = 1`, sin destruir el historial.
 
+### 6.5 Despachos y transferencias (RF09/RF12)
+
+`despachos.php` registra solicitudes por sucursal con comprador independiente
+(RF08) y avanza `PENDIENTE → EN_RUTA → COMPLETADO`, con `fecha_entrega` y
+auditoría; cancelar es una baja lógica del estado. `transferencias.php` exige
+origen ≠ destino, stock suficiente en origen y crea dos asientos con el mismo
+`grupo_id`: `TRANSFERENCIA_SALIDA` y `TRANSFERENCIA_INGRESO`. El operador solo
+puede transferir desde su propia sucursal.
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos y lotes/proveedores, POS, reportes y CSV; N:N en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, lotes/proveedores, despachos y transferencias, POS, reportes y CSV; N:N en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 

@@ -138,6 +138,35 @@ function op_notificar_cola(): void
     $cola = [];
 }
 
+/** Crea la fila de inventario en 0 si el producto aún no existe en esa sede. */
+function op_asegurar_inventario(
+    PDO $pdo,
+    int $productoId,
+    int $sucursalId,
+    array $user
+): void {
+    $st = $pdo->prepare(
+        'SELECT 1 FROM inventario WHERE producto_id = :producto AND sucursal_id = :sucursal'
+    );
+    $st->execute([':producto' => $productoId, ':sucursal' => $sucursalId]);
+    if ($st->fetchColumn() !== false) {
+        return;
+    }
+
+    $aud = op_auditoria($user);
+    $ins = $pdo->prepare(
+        'INSERT INTO inventario
+            (producto_id, sucursal_id, stock, created_by, updated_by)
+         VALUES (:producto, :sucursal, 0, :by1, :by2)'
+    );
+    $ins->execute([
+        ':producto' => $productoId,
+        ':sucursal' => $sucursalId,
+        ':by1'      => $aud['by'],
+        ':by2'      => $aud['by'],
+    ]);
+}
+
 /**
  * Mueve stock de forma atómica y deja el asiento en el kardex (RF01/RF12/RF13).
  * $delta > 0 entrada, $delta < 0 salida. Devuelve el saldo resultante.
