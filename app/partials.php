@@ -33,6 +33,7 @@ function render_barra(array $user, string $activo = ''): void
             <nav class="menu" aria-label="Navegación principal">
                 <?= $enlace('index.php', 'Panel', 'panel') ?>
                 <?= $enlace('pos.php', 'Punto de venta', 'pos') ?>
+                <?= $enlace('reportes.php', 'Reportes', 'reportes') ?>
             </nav>
         </div>
         <div class="barra-der">

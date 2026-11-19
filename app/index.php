@@ -52,6 +52,7 @@ $pendientes = (int) db()->query(
             </p>
             <p class="acciones">
                 <a class="boton" href="pos.php">Abrir punto de venta</a>
+                <a class="btn-mini btn-secundario" href="reportes.php">Ver reportes</a>
             </p>
         </section>
 

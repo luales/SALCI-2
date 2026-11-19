@@ -4,7 +4,8 @@ Sistema de Alertas Logísticas y Control de Inventario.
 Proyecto de Bases de Datos — Evaluación 4 (hito).
 
 **Estado:** base de datos implementada, poblada, consultada y respaldada.
-Prototipo PHP: login, panel por rol, alta de compradores y venta POS (RF15) funcionando.
+Prototipo PHP: login, panel por rol, alta de compradores, venta POS (RF15),
+dashboard, stock en vivo y exportación CSV (RF03/RF10/RF11/RF14) funcionando.
 
 ---
 
@@ -51,6 +52,9 @@ SALCI PHP/
    ├─ pos.php              punto de venta RF15 (carrito + cobro atómico)
    ├─ pos_ticket.php       comprobante de la venta
    ├─ comprador_nuevo.php  alta de compradores RF08
+   ├─ reportes.php         dashboard, stock en vivo y tablas 1/2/N:N
+   ├─ reportes_lib.php     consultas compartidas con el CSV
+   ├─ export_csv.php       descargas UTF-8 con BOM (RF14)
    └─ assets/style.css     estilos
 ```
 
@@ -106,6 +110,9 @@ Desde el panel, **Abrir punto de venta** lleva a `pos.php`. El operador queda
 fijo a su sucursal; el administrador puede cambiar de sucursal en el POS.
 Para cobrar: elegir comprador (o dejar *Consumidor final*), agregar productos
 y presionar **Cobrar**. El comprobante queda en `pos_ticket.php`.
+
+**Ver reportes** abre `reportes.php`: indicadores, top 5, stock con filas
+críticas en rojo, alertas, las consultas 1:N y N:N, kardex y links de descarga.
 
 Si la unión no existe (por ejemplo, en otro equipo):
 
@@ -208,13 +215,21 @@ insertar cada `venta_detalle`, descontar `inventario`, insertar el `SALIDA` en
 cualquier error se hace `ROLLBACK`: no queda venta a medias ni stock descontado.
 El carrito se maneja en sesión y el cobro usa CSRF + *redirect-after-post*.
 
+### 6.2 Reportes (RF03, RF10, RF11, RF14)
+
+`reportes.php` ejecuta las mismas SQL que `db/03_queries.sql` (pautas 2, 3 y 4
+más dashboard, top 5, alertas y kardex). El filtro de sucursal se aplica en
+cada consulta: el OPERADOR no puede cambiarlo y el ADMIN puede elegir una sede
+o ver el consolidado. `export_csv.php` usa las mismas consultas, genera BOM
+UTF-8, separador `;` y escapa celdas que podrían interpretarse como fórmulas.
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, compradores y venta POS; resto del CRUD en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, compradores, POS, reportes y CSV; resto del CRUD en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 
