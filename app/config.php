@@ -27,3 +27,9 @@ defined('DB_USER') || define('DB_USER', null);       // null = autenticación de
 defined('DB_PASS') || define('DB_PASS', null);
 
 defined('SESSION_NAME') || define('SESSION_NAME', 'salci_sid');
+
+/* RF02: alertas critiques por correo y webhook.
+   Vacío = solo se registra en registro_alertas (no se intenta red externa).
+   Un fallo de red NUNCA revierte la transacción de stock. */
+defined('RF02_EMAIL_DESTINO') || define('RF02_EMAIL_DESTINO', '');
+defined('RF02_WEBHOOK_URL')   || define('RF02_WEBHOOK_URL', '');

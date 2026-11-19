@@ -34,6 +34,7 @@ function render_barra(array $user, string $activo = ''): void
                 <?= $enlace('index.php', 'Panel', 'panel') ?>
                 <?= $enlace('pos.php', 'Punto de venta', 'pos') ?>
                 <?= $enlace('reportes.php', 'Reportes', 'reportes') ?>
+                <?= $enlace('productos.php', 'Productos', 'productos') ?>
             </nav>
         </div>
         <div class="barra-der">
@@ -43,4 +44,19 @@ function render_barra(array $user, string $activo = ''): void
         </div>
     </header>
     <?php
+}
+
+/** Avisos de operaciones CRUD (requiere operaciones.php en la página). */
+function render_flash_op(): void
+{
+    if (!function_exists('op_flash_take')) {
+        return;
+    }
+
+    $flash = op_flash_take();
+    if ($flash === null) {
+        return;
+    }
+
+    echo '<div class="flash ' . e($flash['tipo']) . '">' . e($flash['msg']) . '</div>';
 }

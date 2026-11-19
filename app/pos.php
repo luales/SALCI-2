@@ -117,7 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                FROM productos p
                LEFT JOIN inventario i
                       ON i.producto_id = p.id AND i.sucursal_id = :suc
-              WHERE p.id = :pid'
+              WHERE p.id = :pid AND p.activo = 1'
         );
         $st->execute([':suc' => $sucursalId, ':pid' => $pid]);
         $prod = $st->fetch();
@@ -222,13 +222,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $st = $pdo->prepare(
                     'SELECT sku, nombre, precio, stock_minimo
-                       FROM productos WHERE id = :pid'
+                       FROM productos WHERE id = :pid AND activo = 1'
                 );
                 $st->execute([':pid' => $pid]);
                 $prod = $st->fetch();
 
                 if (!$prod) {
-                    throw new RuntimeException('Un producto del carrito ya no existe.');
+                    throw new RuntimeException('Un producto del carrito ya no existe o está de baja.');
                 }
 
                 if ($stock < $cant) {
@@ -432,6 +432,7 @@ $productos = $pdo->prepare(
        FROM productos p
        LEFT JOIN inventario i
               ON i.producto_id = p.id AND i.sucursal_id = :suc
+      WHERE p.activo = 1
       ORDER BY p.nombre'
 );
 $productos->execute([':suc' => $sucursalId]);
@@ -451,7 +452,7 @@ foreach ($cart as $pid => $cant) {
            FROM productos p
            LEFT JOIN inventario i
                   ON i.producto_id = p.id AND i.sucursal_id = :suc
-          WHERE p.id = :pid'
+          WHERE p.id = :pid AND p.activo = 1'
     );
     $st->execute([':suc' => $sucursalId, ':pid' => (int) $pid]);
     $prod = $st->fetch();

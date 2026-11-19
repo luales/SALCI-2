@@ -96,6 +96,7 @@ CREATE TABLE productos (
     nombre       NVARCHAR(150)     NOT NULL,
     precio       DECIMAL(12,2)     NOT NULL CONSTRAINT df_productos_precio DEFAULT (0),
     stock_minimo INT               NOT NULL CONSTRAINT df_productos_min DEFAULT (0),
+    activo       BIT               NOT NULL CONSTRAINT df_productos_activo DEFAULT (1),
     created_at   DATETIME2(0)      NOT NULL CONSTRAINT df_productos_creat DEFAULT (SYSDATETIME()),
     created_by   NVARCHAR(50)      NULL,
     updated_at   DATETIME2(0)      NULL,

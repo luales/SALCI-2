@@ -34,6 +34,7 @@ SALCI PHP/
 │  ├─ 03_queries.sql    las 4 consultas de la pauta + apoyo
 │  ├─ 04_backup.sql     respaldo .bak + verificación
 │  ├─ 05_migracion_pos.sql  agrega productos.precio a bases v3 ya creadas
+│  ├─ 06_migracion_productos_activo.sql  baja lógica de productos
 │  └─ diagrama.dbml     modelo para dbdiagram.io (Figura 3)
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
@@ -55,6 +56,11 @@ SALCI PHP/
    ├─ reportes.php         dashboard, stock en vivo y tablas 1/2/N:N
    ├─ reportes_lib.php     consultas compartidas con el CSV
    ├─ export_csv.php       descargas UTF-8 con BOM (RF14)
+   ├─ operaciones.php       transacciones, stock, auditoría y RF02
+   ├─ productos.php        CRUD de la tabla 1 (catálogo global)
+   ├─ producto_form.php    alta / edición / consulta
+   ├─ producto_guardar.php INSERT/UPDATE con inventario por sucursal
+   ├─ producto_estado.php  baja lógica (activo = 0)
    └─ assets/style.css     estilos
 ```
 
@@ -80,6 +86,7 @@ Si la base ya existía antes del POS (esquema v3), ejecutar una sola vez:
 
 ```bat
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql
+sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\06_migracion_productos_activo.sql
 ```
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
@@ -223,13 +230,21 @@ cada consulta: el OPERADOR no puede cambiarlo y el ADMIN puede elegir una sede
 o ver el consolidado. `export_csv.php` usa las mismas consultas, genera BOM
 UTF-8, separador `;` y escapa celdas que podrían interpretarse como fórmulas.
 
+### 6.3 CRUD de productos (tabla 1)
+
+`productos.php` es el ABM del catálogo global. El ADMIN crea, edita y da de baja;
+el OPERADOR solo consulta y ve el stock de su sucursal (RF11). El alta crea
+`inventario` en 0 para todas las sucursales activas y la baja es lógica
+(`activo = 0`, migración 06) para no perder el historial de ventas y lotes.
+Los renglones con `stock <= stock_minimo` se pintan de rojo (RF10).
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, compradores, POS, reportes y CSV; resto del CRUD en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, POS, reportes y CSV; tabla 2 y N:N en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 
