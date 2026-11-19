@@ -1,0 +1,45 @@
+<?php
+declare(strict_types=1);
+
+/* ---------------------------------------------------------------------
+   Utilidades de presentación compartidas por las pantallas internas.
+   --------------------------------------------------------------------- */
+
+function e(?string $s): string
+{
+    return htmlspecialchars((string) $s, ENT_QUOTES, 'UTF-8');
+}
+
+function pesos(int $centavos): string
+{
+    return '$ ' . number_format($centavos / 100, 2, ',', '.');
+}
+
+/**
+ * Barra superior con navegación. $activo resalta la sección actual.
+ */
+function render_barra(array $user, string $activo = ''): void
+{
+    $enlace = static function (string $href, string $texto, string $clave) use ($activo): string {
+        $clase = 'menu-link' . ($activo === $clave ? ' activo' : '');
+
+        return '<a class="' . $clase . '" href="' . e($href) . '">' . e($texto) . '</a>';
+    };
+    ?>
+    <header class="barra">
+        <div class="barra-izq">
+            <span class="logo">S</span>
+            <strong><?= e(APP_NAME) ?></strong>
+            <nav class="menu" aria-label="Navegación principal">
+                <?= $enlace('index.php', 'Panel', 'panel') ?>
+                <?= $enlace('pos.php', 'Punto de venta', 'pos') ?>
+            </nav>
+        </div>
+        <div class="barra-der">
+            <span class="chip"><?= e((string) $user['rol']) ?></span>
+            <span><?= e((string) $user['username']) ?></span>
+            <a class="salir" href="logout.php">Cerrar sesión</a>
+        </div>
+    </header>
+    <?php
+}

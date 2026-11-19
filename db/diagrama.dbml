@@ -37,6 +37,7 @@ Table productos {
   id           int           [pk, increment]
   sku          nvarchar(30)  [not null, unique, note: 'clave de negocio global']
   nombre       nvarchar(150) [not null]
+  precio       decimal(12,2) [not null, default: 0, note: 'precio de lista (RF15)']
   stock_minimo int           [not null, default: 0, note: 'umbral global (RF10)']
   created_at   datetime2     [not null]
   created_by   nvarchar(50)

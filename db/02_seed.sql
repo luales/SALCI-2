@@ -56,15 +56,15 @@ INSERT INTO usuarios (username, password_hash, salt, rol, sucursal_id, activo, c
  ('cajero.conce',    '45f6020ce39df18dfb09e5ea88b56e4d9450c8fd3797d11771b4cfba093afab1', '1268512fb865356c39dab0ea9aea79cd', 'OPERADOR', 2,    1, 'seed'),
  ('cajero.santiago', 'b760297ff887ead1e770b012ab2f8c98430fea8e2adcfd97f706dd13082eadb0', 'ea1a4c4165bde106175e527abbe00036', 'OPERADOR', 3,    1, 'seed');
 
-INSERT INTO productos (sku, nombre, stock_minimo, created_by) VALUES
- ('HAR-001', 'Harina 1 kg',    10, 'seed'),
- ('ACE-001', 'Aceite 1 L',      8, 'seed'),
- ('ARR-001', 'Arroz 1 kg',     12, 'seed'),
- ('AZU-001', 'Azúcar 1 kg',    10, 'seed'),
- ('FID-001', 'Fideos 500 g',   15, 'seed'),
- ('SAL-001', 'Sal 1 kg',        6, 'seed'),
- ('CAF-001', 'Café 250 g',     12, 'seed'),
- ('LEC-001', 'Leche 1 L',      20, 'seed');
+INSERT INTO productos (sku, nombre, precio, stock_minimo, created_by) VALUES
+ ('HAR-001', 'Harina 1 kg',  1290, 10, 'seed'),
+ ('ACE-001', 'Aceite 1 L',   2190,  8, 'seed'),
+ ('ARR-001', 'Arroz 1 kg',   1490, 12, 'seed'),
+ ('AZU-001', 'Azúcar 1 kg',  1190, 10, 'seed'),
+ ('FID-001', 'Fideos 500 g',  890, 15, 'seed'),
+ ('SAL-001', 'Sal 1 kg',      690,  6, 'seed'),
+ ('CAF-001', 'Café 250 g',   3590, 12, 'seed'),
+ ('LEC-001', 'Leche 1 L',    1090, 20, 'seed');
 
 INSERT INTO proveedores (rut, nombre, telefono, email, created_by) VALUES
  ('76.111.222-3', 'Molinos del Sur',       '+56 41 234 5678', 'ventas@molinosdelsur.cl',   'seed'),

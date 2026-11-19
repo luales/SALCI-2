@@ -63,7 +63,7 @@ N:N que mostrar, y la pauta pide explícitamente un informe N:N.
 | `despachos_pendientes` | `sku`, `comprador_rut`, `comprador_nombre` | `producto_id`, `comprador_id`, `venta_id` |
 | `registro_alertas` | `sku_producto` | `producto_id` + `stock_al_momento` |
 | `usuarios` | `password_hash` | `password_hash` + `salt` |
-| `productos` | `sucursal_id`, `stock`, `movimientos` | catálogo global: solo `sku` (UNIQUE), `nombre` y `stock_minimo` |
+| `productos` | `sucursal_id`, `stock`, `movimientos` | catálogo global: `sku` (UNIQUE), `nombre`, `precio` y `stock_minimo` |
 | `inventario` | (no existía) | **nueva**: `stock` por `(producto_id, sucursal_id)` |
 
 `transacciones` deja de ser una tabla "para todo" y pasa a ser el **kardex inmutable**
@@ -159,7 +159,7 @@ para reemplazar la figura del informe.
 Se separó en:
 
 ```
-productos  (id, sku UNIQUE, nombre, stock_minimo)                 -- catálogo global
+productos  (id, sku UNIQUE, nombre, precio, stock_minimo)          -- catálogo global
 inventario (producto_id, sucursal_id, stock)                      -- stock por sede
              UNIQUE (producto_id, sucursal_id)
 ```
@@ -172,6 +172,9 @@ Consecuencias:
 - RF11 (catálogo global) y RF12 (transferencia) se resuelven directo.
 - Se eliminó `productos.movimientos`, que era un contador derivable con `COUNT` sobre
   `transacciones`.
+- `precio` depende solo de `producto_id` → 3FN. `venta_detalle.precio_unitario`
+  guarda el precio **histórico** de cada venta: no es una duplicación, porque
+  cambiar el precio de lista no debe alterar boletas ya emitidas.
 
 ## 8. Texto sugerido para la sección 7 del informe
 

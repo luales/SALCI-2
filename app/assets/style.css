@@ -634,3 +634,429 @@ code {
         background: rgba(8, 15, 25, .92);
     }
 }
+
+/* =====================================================================
+   POS / RF15 y navegación interna
+   ===================================================================== */
+
+/* ---------- Menú de navegación ---------- */
+
+.menu {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: 10px;
+}
+
+.menu-link {
+    padding: 7px 11px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    color: var(--suave);
+    font-size: .82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.menu-link:hover {
+    color: var(--texto);
+    background: rgba(255, 255, 255, .05);
+}
+
+.menu-link.activo {
+    color: var(--acento);
+    background: rgba(94, 234, 212, .10);
+    border-color: rgba(94, 234, 212, .24);
+}
+
+/* ---------- Selects y botones auxiliares ---------- */
+
+select {
+    padding: 11px 12px;
+    border: 1px solid var(--stroke);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .045);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: .9rem;
+}
+
+select:focus {
+    outline: none;
+    border-color: rgba(94, 234, 212, .60);
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, .14);
+}
+
+.btn-mini {
+    width: auto;
+    margin: 0;
+    padding: 8px 12px;
+    border-radius: 9px;
+    font-size: .76rem;
+    letter-spacing: .02em;
+    box-shadow: none;
+    white-space: nowrap;
+}
+
+.btn-mini:hover {
+    transform: none;
+}
+
+.btn-secundario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .05);
+    border: 1px solid var(--stroke);
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.btn-secundario:hover {
+    background: rgba(94, 234, 212, .10);
+    border-color: rgba(94, 234, 212, .30);
+    color: var(--acento);
+    filter: none;
+}
+
+.btn-peligro {
+    background: var(--peligro-fondo);
+    border: 1px solid var(--peligro-borde);
+    color: var(--peligro);
+}
+
+.btn-peligro:hover {
+    background: rgba(248, 113, 113, .18);
+    filter: none;
+}
+
+.boton {
+    display: inline-block;
+    width: auto;
+    margin-top: 0;
+    padding: 11px 18px;
+    border-radius: 11px;
+    background: linear-gradient(135deg, var(--acento), var(--acento-2));
+    color: var(--acento-tinta);
+    font-size: .86rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(56, 189, 248, .20);
+}
+
+.boton:hover {
+    filter: brightness(1.07);
+}
+
+.acciones {
+    margin-top: 20px;
+}
+
+/* ---------- Layout del POS ---------- */
+
+.panel-ancho {
+    max-width: 1240px;
+}
+
+.panel-estrecho {
+    max-width: 720px;
+}
+
+.pos-barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin: 24px 0 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--stroke);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .035);
+}
+
+.fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.pos-barra label {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.pos-barra select {
+    width: auto;
+    min-width: 200px;
+}
+
+.pos-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, .9fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.carrito {
+    position: sticky;
+    top: 86px;
+}
+
+.tabla-scroll {
+    overflow-x: auto;
+    margin-top: 10px;
+}
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .84rem;
+}
+
+.tabla th {
+    padding: 9px 8px;
+    border-bottom: 1px solid var(--stroke);
+    color: var(--suave);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.tabla td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--stroke-suave);
+    vertical-align: middle;
+}
+
+.tabla tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.tabla .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.tabla tr.critico td {
+    background: rgba(248, 113, 113, .07);
+}
+
+.stock-critico {
+    margin-left: 6px;
+    color: var(--peligro);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.tenue {
+    color: var(--tenue);
+    font-size: .78rem;
+}
+
+.buscador {
+    margin: 6px 0 2px;
+}
+
+.fila-mini {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin: 0;
+}
+
+.fila-mini input[type="number"] {
+    width: 68px;
+    padding: 8px;
+    text-align: center;
+}
+
+.totales {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px 14px;
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px solid var(--stroke-suave);
+    font-size: .9rem;
+}
+
+.totales dd {
+    text-align: right;
+}
+
+.totales .total-final {
+    color: var(--acento);
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.vacio {
+    margin: 10px 0 0;
+    color: var(--suave);
+    font-size: .86rem;
+    line-height: 1.6;
+}
+
+.alerta.ok {
+    background: rgba(94, 234, 212, .08);
+    border-color: rgba(94, 234, 212, .26);
+    color: var(--acento);
+}
+
+.btn-cobrar {
+    width: 100%;
+    margin-top: 18px;
+}
+
+.btn-cobrar:disabled {
+    cursor: not-allowed;
+    filter: none;
+    opacity: .45;
+    transform: none;
+}
+
+.limpiar {
+    margin-top: 10px;
+}
+
+.acciones-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-guardar {
+    width: auto;
+    margin-top: 0;
+}
+
+/* ---------- Comprobante ---------- */
+
+.ticket-cab {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--stroke-suave);
+}
+
+.ticket-cab h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.ticket-meta {
+    grid-template-columns: 120px 1fr;
+    margin: 16px 0;
+}
+
+.ticket .totales {
+    max-width: 330px;
+    margin-left: auto;
+}
+
+/* ---------- Adaptación ---------- */
+
+@media (max-width: 980px) {
+    .pos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .carrito {
+        position: static;
+    }
+}
+
+@media (max-width: 720px) {
+    .barra-izq {
+        flex-wrap: wrap;
+    }
+
+    .menu {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .pos-barra .fila {
+        width: 100%;
+    }
+
+    .pos-barra select {
+        width: 100%;
+    }
+
+    .ticket-meta {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Impresión del comprobante ---------- */
+
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    body::before,
+    body::after,
+    .barra,
+    .no-print {
+        display: none !important;
+    }
+
+    .panel {
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
+    .detalle {
+        background: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        box-shadow: none !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        color: #000000 !important;
+    }
+
+    .detalle h2,
+    .detalle p,
+    .detalle dt,
+    .detalle dd,
+    .tabla td,
+    .tabla th,
+    .mono {
+        color: #000000 !important;
+    }
+
+    .tabla th {
+        border-bottom: 1px solid #888888 !important;
+    }
+
+    .tabla td {
+        border-bottom: 1px solid #dddddd !important;
+    }
+
+    .tabla tr.critico td {
+        background: #ffffff !important;
+    }
+
+    .chip {
+        background: #eeeeee !important;
+        border-color: #999999 !important;
+        color: #000000 !important;
+    }
+}

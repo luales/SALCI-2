@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/partials.php';
 
 $user    = auth_require();
 $saludo  = rol_saludo($user['rol']);
@@ -23,10 +24,6 @@ $pendientes = (int) db()->query(
       WHERE estado IN ('PENDIENTE','EN_RUTA')"
 )->fetchColumn();
 
-function e(string $s): string
-{
-    return htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
-}
 ?>
 <!doctype html>
 <html lang="es">
@@ -39,17 +36,7 @@ function e(string $s): string
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <header class="barra">
-        <div class="barra-izq">
-            <span class="logo">S</span>
-            <strong><?= APP_NAME ?></strong>
-        </div>
-        <div class="barra-der">
-            <span class="chip"><?= e($user['rol']) ?></span>
-            <span><?= e($user['username']) ?></span>
-            <a class="salir" href="logout.php">Cerrar sesión</a>
-        </div>
-    </header>
+    <?php render_barra($user, 'panel'); ?>
 
     <main class="panel">
         <section class="bienvenida">
@@ -62,6 +49,9 @@ function e(string $s): string
             ?>
             <p>
                 Sesión iniciada como <strong><?= e($user['username']) ?></strong> <?= $contexto ?>.
+            </p>
+            <p class="acciones">
+                <a class="boton" href="pos.php">Abrir punto de venta</a>
             </p>
         </section>
 

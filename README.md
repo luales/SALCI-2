@@ -4,7 +4,7 @@ Sistema de Alertas Logísticas y Control de Inventario.
 Proyecto de Bases de Datos — Evaluación 4 (hito).
 
 **Estado:** base de datos implementada, poblada, consultada y respaldada.
-Prototipo PHP en construcción: login y panel por rol ya funcionando.
+Prototipo PHP: login, panel por rol, alta de compradores y venta POS (RF15) funcionando.
 
 ---
 
@@ -32,6 +32,7 @@ SALCI PHP/
 │  ├─ 02_seed.sql       datos de demostración (borra y recarga)
 │  ├─ 03_queries.sql    las 4 consultas de la pauta + apoyo
 │  ├─ 04_backup.sql     respaldo .bak + verificación
+│  ├─ 05_migracion_pos.sql  agrega productos.precio a bases v3 ya creadas
 │  └─ diagrama.dbml     modelo para dbdiagram.io (Figura 3)
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
@@ -46,6 +47,10 @@ SALCI PHP/
    ├─ login.php            formulario de ingreso
    ├─ index.php            panel (Hola admin / Hola trabajador)
    ├─ logout.php           cierre de sesión
+   ├─ partials.php         barra de navegación y formato de dinero
+   ├─ pos.php              punto de venta RF15 (carrito + cobro atómico)
+   ├─ pos_ticket.php       comprobante de la venta
+   ├─ comprador_nuevo.php  alta de compradores RF08
    └─ assets/style.css     estilos
 ```
 
@@ -65,6 +70,12 @@ Para reconstruir desde cero:
 ```bat
 sqlcmd -S .\SQLEXPRESS -E -C -Q "ALTER DATABASE SALCI SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE SALCI;"
 sqlcmd -S .\SQLEXPRESS -E -C -i db\01_schema.sql
+```
+
+Si la base ya existía antes del POS (esquema v3), ejecutar una sola vez:
+
+```bat
+sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql
 ```
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
@@ -90,6 +101,11 @@ http://localhost/salci/login.php
 
 - `admin` / `Salci2026!` → **Hola admin**
 - `cajero.chillan` / `Salci2026!` → **Hola trabajador**
+
+Desde el panel, **Abrir punto de venta** lleva a `pos.php`. El operador queda
+fijo a su sucursal; el administrador puede cambiar de sucursal en el POS.
+Para cobrar: elegir comprador (o dejar *Consumidor final*), agregar productos
+y presionar **Cobrar**. El comprobante queda en `pos_ticket.php`.
 
 Si la unión no existe (por ejemplo, en otro equipo):
 
@@ -177,7 +193,20 @@ Relaciones que exige la pauta:
 - **N:N** — `ventas ↔ productos` a través de `venta_detalle`
 - **Usuarios** — `usuarios` con rol y sucursal
 
+`proveedores`, `compradores` y `ventas` son tablas independientes (observación
+del profesor): la venta guarda `comprador_id`, nunca nombre ni RUT en texto.
+`productos.precio` es el precio de lista; `venta_detalle.precio_unitario`
+congela el precio al momento de vender, para no alterar boletas antiguas.
+
 Detalle del modelo y su justificación en `docs/MER-corregido.md`.
+
+### 6.1 Venta POS (RF15, RF01, RF02, RF08)
+
+Un solo `BEGIN TRAN` hace: validar stock con `UPDLOCK`, insertar `ventas`,
+insertar cada `venta_detalle`, descontar `inventario`, insertar el `SALIDA` en
+`transacciones` y generar la alerta si el saldo queda bajo el mínimo. Ante
+cualquier error se hace `ROLLBACK`: no queda venta a medias ni stock descontado.
+El carrito se maneja en sesión y el cobro usa CSRF + *redirect-after-post*.
 
 ## 7. Correspondencia con la rúbrica
 
@@ -185,7 +214,7 @@ Detalle del modelo y su justificación en `docs/MER-corregido.md`.
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login y panel por rol; CRUD en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, compradores y venta POS; resto del CRUD en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 

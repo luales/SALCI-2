@@ -58,6 +58,9 @@ sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql
 
 - `01_schema.sql` crea la base `SALCI` si no existe y todas las tablas.
 - `02_seed.sql` carga los datos de demostración.
+- Si tu base ya existía con el esquema anterior, ejecuta **una sola vez**
+  `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql`:
+  agrega `productos.precio` sin borrar datos (necesario para el POS).
 
 > **Aviso:** `02_seed.sql` borra los datos actuales y los reemplaza por los de
 > demo. No ejecutarlo si alguien ya cargó información que quiere conservar.
@@ -125,7 +128,8 @@ Reglas para que la base no se desincronice:
 
 1. **La fuente de verdad es `db/01_schema.sql`.** Si cambias una tabla, cambia
    el script y haz commit. No modifiques la base "a mano" y dejes el script
-   atrás: el resto no recibe el cambio.
+   atrás: el resto no recibe el cambio. Después de un `git pull`, si aparece
+   un script `05_*`, ejecútalo una vez en tu base local.
 2. **Los datos no se versionan.** Cada uno carga `02_seed.sql` cuando necesita
    volver al estado de demo.
 3. **Antes de presentar**, ejecutar `02_seed.sql` para que todos vean lo mismo.

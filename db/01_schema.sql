@@ -94,6 +94,7 @@ CREATE TABLE productos (
     id           INT IDENTITY(1,1) NOT NULL,
     sku          NVARCHAR(30)      NOT NULL,
     nombre       NVARCHAR(150)     NOT NULL,
+    precio       DECIMAL(12,2)     NOT NULL CONSTRAINT df_productos_precio DEFAULT (0),
     stock_minimo INT               NOT NULL CONSTRAINT df_productos_min DEFAULT (0),
     created_at   DATETIME2(0)      NOT NULL CONSTRAINT df_productos_creat DEFAULT (SYSDATETIME()),
     created_by   NVARCHAR(50)      NULL,
@@ -101,7 +102,8 @@ CREATE TABLE productos (
     updated_by   NVARCHAR(50)      NULL,
     CONSTRAINT pk_productos        PRIMARY KEY (id),
     CONSTRAINT uq_productos_sku    UNIQUE (sku),
-    CONSTRAINT ck_productos_minimo CHECK (stock_minimo >= 0)
+    CONSTRAINT ck_productos_minimo CHECK (stock_minimo >= 0),
+    CONSTRAINT ck_productos_precio CHECK (precio >= 0)
 );
 GO
 
