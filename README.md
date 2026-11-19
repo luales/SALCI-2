@@ -266,13 +266,22 @@ origen ≠ destino, stock suficiente en origen y crea dos asientos con el mismo
 `grupo_id`: `TRANSFERENCIA_SALIDA` y `TRANSFERENCIA_INGRESO`. El operador solo
 puede transferir desde su propia sucursal.
 
+### 6.6 Usuarios y sucursales (RF06/RF07)
+
+`usuarios.php` permite crear, editar y eliminar cuentas (baja lógica). Las
+contraseñas se guardan con SHA-256 + sal de 16 bytes, igual que el seed, y
+cambiar el rol a OPERADOR exige una sucursal. RF06 se respeta: no se puede
+deshabilitar la propia cuenta ni al último ADMIN activo. `sucursales.php` da de
+alta, edita, deshabilita y elimina sedes; la eliminación se bloquea si hay
+usuarios, existencias o movimientos asociados.
+
 ## 7. Correspondencia con la rúbrica
 
 | Indicador de la pauta | Entregable |
 |---|---|
 | Scripts del modelo físico y relaciones | `db/01_schema.sql` |
 | Consultas SQL (login, tabla 1, 1:N, N:N) | `db/03_queries.sql` |
-| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, lotes/proveedores, despachos y transferencias, POS, reportes y CSV; N:N en curso) |
+| Prototipo con interfaz gráfica y CRUD | `app/` (login, panel por rol, CRUD de productos, lotes/proveedores, despachos, transferencias, usuarios y sucursales; POS, reportes y CSV; N:N en curso) |
 | Prueba en entorno local y respaldo | `db/02_seed.sql` + `db/04_backup.sql` |
 | Normalización hasta 3FN | `docs/auditoria-3FN.md` |
 

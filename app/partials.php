@@ -39,6 +39,11 @@ function render_barra(array $user, string $activo = ''): void
                 <?= $enlace('proveedores.php', 'Proveedores', 'proveedores') ?>
                 <?= $enlace('despachos.php', 'Despachos', 'despachos') ?>
                 <?= $enlace('transferencias.php', 'Transferencias', 'transferencias') ?>
+                <?php if (($user['rol'] ?? '') === 'ADMIN'): ?>
+                    <?= $enlace('ventas.php', 'Ventas', 'ventas') ?>
+                    <?= $enlace('usuarios.php', 'Usuarios', 'usuarios') ?>
+                    <?= $enlace('sucursales.php', 'Sucursales', 'sucursales') ?>
+                <?php endif; ?>
             </nav>
         </div>
         <div class="barra-der">

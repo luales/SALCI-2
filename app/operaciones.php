@@ -349,6 +349,17 @@ function op_notificar(array $alerta): void
     }
 }
 
+/** Hash SALCI: SHA-256(salt_binario || password), igual que 02_seed.sql. */
+function op_hash_password(string $password): array
+{
+    $salt = bin2hex(random_bytes(16));
+
+    return [
+        'salt' => $salt,
+        'hash' => hash('sha256', hex2bin($salt) . $password),
+    ];
+}
+
 function op_texto(?string $valor, int $maximo): string
 {
     return mb_substr(trim((string) $valor), 0, $maximo);
