@@ -43,10 +43,30 @@ try {
     }
 
     if ($venta > 0) {
-        $st = $pdo->prepare('SELECT 1 FROM ventas WHERE id = :id AND estado = \'COMPLETADA\'');
-        $st->execute([':id' => $venta]);
-        if ($st->fetchColumn() === false) {
+        $st = $pdo->prepare(
+            'SELECT v.sucursal_id,
+                    ISNULL((SELECT SUM(d.cantidad)
+                              FROM venta_detalle d
+                             WHERE d.venta_id = v.id
+                               AND d.producto_id = :producto), 0) AS vendidos
+               FROM ventas v
+              WHERE v.id = :id AND v.estado = \'COMPLETADA\''
+        );
+        $st->execute([':id' => $venta, ':producto' => $producto]);
+        $ventaFila = $st->fetch();
+
+        if (!$ventaFila) {
             throw new RuntimeException('El folio de venta no existe o no está completada.');
+        }
+
+        if ((int) $ventaFila['sucursal_id'] !== $sucursal) {
+            throw new RuntimeException('La venta pertenece a otra sucursal.');
+        }
+
+        if ((int) $ventaFila['vendidos'] < (int) $cantidad) {
+            throw new RuntimeException(
+                'La venta indicada no contiene ese producto en la cantidad solicitada.'
+            );
         }
     }
 

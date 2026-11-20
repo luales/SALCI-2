@@ -220,10 +220,12 @@ function op_mover_stock(
     $mov = $pdo->prepare(
         'INSERT INTO transacciones
             (tipo, producto_id, sucursal_id, cantidad, stock_resultante,
-             lote_id, venta_detalle_id, usuario_id, grupo_id, fecha)
+             lote_id, venta_detalle_id, usuario_id, grupo_id, fecha,
+             created_at, created_by, updated_at, updated_by)
          VALUES
             (:tipo, :producto, :sucursal, :cantidad, :stock,
-             :lote, :detalle, :usuario, :grupo, :fecha)'
+             :lote, :detalle, :usuario, :grupo, :fecha,
+             :creat, :cby, :upat, :upy)'
     );
     $mov->execute([
         ':tipo'     => $tipo,
@@ -236,6 +238,10 @@ function op_mover_stock(
         ':usuario'  => (int) $user['id'],
         ':grupo'    => $grupoId,
         ':fecha'    => $aud['at'],
+        ':creat'    => $aud['at'],
+        ':cby'      => $aud['by'],
+        ':upat'     => $aud['at'],
+        ':upy'      => $aud['by'],
     ]);
 
     op_alerta_si_critico($pdo, $productoId, $sucursalId, $nuevo, $user);
@@ -328,15 +334,82 @@ function op_notificar_alertas_nuevas(PDO $pdo, int $desdeId): void
     }
 }
 
+/**
+ * POST JSON usado por RF02 (Resend y webhook).
+ * Prefiere cURL; si la extensión no está cargada usa streams HTTP nativos,
+ * de modo que el prototipo funcione también en el Apache de XAMPP sin curl.
+ *
+ * @return array{codigo:int,cuerpo:string,error:string}
+ */
+function op_http_post_json(string $url, string $payload, array $headers, int $timeout): array
+{
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_TIMEOUT        => $timeout,
+            CURLOPT_CONNECTTIMEOUT => min(3, $timeout),
+            CURLOPT_RETURNTRANSFER => true,
+        ]);
+
+        $respuesta = curl_exec($ch);
+        $codigo    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error     = (string) curl_error($ch);
+        curl_close($ch);
+
+        return [
+            'codigo' => $codigo,
+            'cuerpo' => $respuesta === false ? '' : (string) $respuesta,
+            'error'  => $error,
+        ];
+    }
+
+    $esquema = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+    $host    = (string) parse_url($url, PHP_URL_HOST);
+    if (!in_array($esquema, ['http', 'https'], true) || $host === '') {
+        return ['codigo' => 0, 'cuerpo' => '', 'error' => 'URL de notificación no válida.'];
+    }
+    if (!ini_get('allow_url_fopen')) {
+        return ['codigo' => 0, 'cuerpo' => '', 'error' => 'allow_url_fopen está deshabilitado.'];
+    }
+
+    $ctx = stream_context_create([
+        'http' => [
+            'method'          => 'POST',
+            'header'          => implode("\r\n", $headers) . "\r\nConnection: close\r\n",
+            'content'         => $payload,
+            'timeout'         => $timeout,
+            'ignore_errors'   => true,
+            'protocol_version' => 1.1,
+        ],
+    ]);
+
+    $respuesta = @file_get_contents($url, false, $ctx);
+    $codigo    = 0;
+    if (isset($http_response_header) && is_array($http_response_header)) {
+        foreach ($http_response_header as $linea) {
+            if (preg_match('/^HTTP\/\S+\s+(\d{3})/', $linea, $m) === 1) {
+                $codigo = (int) $m[1];
+            }
+        }
+    }
+
+    if ($respuesta === false) {
+        return [
+            'codigo' => $codigo,
+            'cuerpo' => '',
+            'error'  => 'No se pudo conectar con ' . $esquema . '://' . $host . '.',
+        ];
+    }
+
+    return ['codigo' => $codigo, 'cuerpo' => (string) $respuesta, 'error' => ''];
+}
+
 /** Envío por Resend API (RF02). La key viaja solo en el servidor. */
 function op_enviar_resend(string $apiKey, string $destino, string $asunto, string $cuerpo): void
 {
-    if (!function_exists('curl_init')) {
-        error_log('SALCI RF02 Resend: falta la extensión curl.');
-
-        return;
-    }
-
     $from  = defined('RF02_RESEND_FROM') ? (string) RF02_RESEND_FROM : 'SALCI <onboarding@resend.dev>';
     $datos = json_encode([
         'from'    => $from,
@@ -345,32 +418,31 @@ function op_enviar_resend(string $apiKey, string $destino, string $asunto, strin
         'text'    => $cuerpo,
     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-    $ch = curl_init('https://api.resend.com/emails');
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $datos,
-        CURLOPT_HTTPHEADER     => [
-            'Authorization: Bearer ' . $apiKey,
-            'Content-Type: application/json',
-        ],
-        CURLOPT_TIMEOUT        => 5,
-        CURLOPT_CONNECTTIMEOUT => 3,
-        CURLOPT_RETURNTRANSFER => true,
-    ]);
-
-    $respuesta = curl_exec($ch);
-    $codigo    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error     = curl_error($ch);
-    curl_close($ch);
-
-    if ($error !== '') {
-        error_log('SALCI RF02 Resend: ' . $error);
+    if ($datos === false) {
+        error_log('SALCI RF02 Resend: no se pudo serializar el correo.');
 
         return;
     }
 
-    if ($codigo < 200 || $codigo >= 300) {
-        error_log('SALCI RF02 Resend HTTP ' . $codigo . ': ' . mb_substr((string) $respuesta, 0, 300));
+    $res = op_http_post_json(
+        'https://api.resend.com/emails',
+        $datos,
+        [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($datos),
+        ],
+        5
+    );
+
+    if ($res['error'] !== '') {
+        error_log('SALCI RF02 Resend: ' . $res['error']);
+
+        return;
+    }
+
+    if ($res['codigo'] < 200 || $res['codigo'] >= 300) {
+        error_log('SALCI RF02 Resend HTTP ' . $res['codigo'] . ': ' . mb_substr($res['cuerpo'], 0, 300));
     }
 }
 
@@ -399,31 +471,27 @@ function op_notificar(array $alerta): void
     $url = defined('RF02_WEBHOOK_URL') ? (string) RF02_WEBHOOK_URL : '';
     if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
         $payload = json_encode($alerta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        try {
-            if (function_exists('curl_init')) {
-                $ch = curl_init($url);
-                curl_setopt_array($ch, [
-                    CURLOPT_POST           => true,
-                    CURLOPT_POSTFIELDS     => $payload,
-                    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-                    CURLOPT_TIMEOUT        => 2,
-                    CURLOPT_CONNECTTIMEOUT => 2,
-                    CURLOPT_RETURNTRANSFER => true,
-                ]);
-                curl_exec($ch);
-                curl_close($ch);
-            } else {
-                file_get_contents($url, false, stream_context_create([
-                    'http' => [
-                        'method'  => 'POST',
-                        'header'  => "Content-Type: application/json\r\n",
-                        'content' => (string) $payload,
-                        'timeout' => 2,
+        if ($payload === false) {
+            error_log('SALCI RF02 webhook: no se pudo serializar la alerta.');
+        } else {
+            try {
+                $res = op_http_post_json(
+                    $url,
+                    $payload,
+                    [
+                        'Content-Type: application/json',
+                        'Content-Length: ' . strlen($payload),
                     ],
-                ]));
+                    2
+                );
+                if ($res['error'] !== '') {
+                    error_log('SALCI RF02 webhook: ' . $res['error']);
+                } elseif ($res['codigo'] < 200 || $res['codigo'] >= 300) {
+                    error_log('SALCI RF02 webhook HTTP ' . $res['codigo']);
+                }
+            } catch (Throwable $e) {
+                error_log('SALCI RF02 webhook: ' . $e->getMessage());
             }
-        } catch (Throwable $e) {
-            error_log('SALCI RF02 webhook: ' . $e->getMessage());
         }
     }
 }

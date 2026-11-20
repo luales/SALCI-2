@@ -45,6 +45,28 @@ try {
         }
     }
 
+    if ($id > 0) {
+        $st = $pdo->prepare('SELECT rol, activo FROM usuarios WHERE id = :id');
+        $st->execute([':id' => $id]);
+        $target = $st->fetch();
+
+        if (!$target) {
+            throw new RuntimeException('La cuenta no existe.');
+        }
+
+        if ($rol !== 'ADMIN' && $target['rol'] === 'ADMIN' && (int) $target['activo'] === 1) {
+            $admins = (int) $pdo->query(
+                "SELECT COUNT(*) FROM usuarios WHERE rol = 'ADMIN' AND activo = 1"
+            )->fetchColumn();
+
+            if ($admins <= 1) {
+                throw new RuntimeException(
+                    'No se puede quitar el rol al último administrador activo (RF06).'
+                );
+            }
+        }
+    }
+
     op_tx($pdo, static function () use (
         $pdo, $id, $username, $password, $rol, $sucursalDb, $aud
     ): void {

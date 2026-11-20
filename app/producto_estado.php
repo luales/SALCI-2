@@ -24,6 +24,12 @@ $aud = op_auditoria($user);
 
 try {
     op_tx($pdo, static function () use ($pdo, $id, $accion, $aud): void {
+        $existe = $pdo->prepare('SELECT 1 FROM productos WHERE id = :id');
+        $existe->execute([':id' => $id]);
+        if ($existe->fetchColumn() === false) {
+            throw new RuntimeException('El producto ya no existe.');
+        }
+
         $upd = $pdo->prepare(
             'UPDATE productos
                 SET activo = :activo, updated_at = :at, updated_by = :by
@@ -35,10 +41,6 @@ try {
             ':by'     => $aud['by'],
             ':id'     => $id,
         ]);
-
-        if ($upd->rowCount() === 0) {
-            throw new RuntimeException('El producto ya no existe.');
-        }
     });
 
     op_flash('ok', $accion === 'alta' ? 'Producto reactivado.' : 'Producto dado de baja.');

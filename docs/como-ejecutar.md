@@ -58,10 +58,13 @@ sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql
 
 - `01_schema.sql` crea la base `SALCI` si no existe y todas las tablas.
 - `02_seed.sql` carga los datos de demostración.
-- `01_schema.sql` ya incluye `productos.precio`, `productos.activo` y
-  `lotes.anulado`. Si tu base venía de una versión anterior, aplica una sola
-  vez las migraciones `05_migracion_pos.sql`, `06_migracion_productos_activo.sql`
-  y `07_migracion_lotes_anulado.sql` antes de cargar el seed.
+- `01_schema.sql` ya incluye `productos.precio`, `productos.activo`,
+  `lotes.anulado`, las columnas de auditoría de RF13 y el `ck_transacciones_origen`
+  actualizado. Si tu base venía de una versión anterior, aplica una sola vez
+  las migraciones `05_migracion_pos.sql`, `06_migracion_productos_activo.sql`
+  y `07_migracion_lotes_anulado.sql`; para RF13 ejecuta tambien
+  `08_migracion_auditoria.sql` con `-I` y luego
+  `09_migracion_ajuste_origen.sql`, antes de cargar el seed.
 
 > **Aviso:** `02_seed.sql` borra los datos actuales y los reemplaza por los de
 > demo. No ejecutarlo si alguien ya cargó información que quiere conservar.

@@ -192,6 +192,8 @@ CREATE TABLE lotes (
     anulado       BIT               NOT NULL CONSTRAINT df_lotes_anulado DEFAULT (0),
     created_at    DATETIME2(0)      NOT NULL CONSTRAINT df_lotes_creat DEFAULT (SYSDATETIME()),
     created_by    NVARCHAR(50)      NULL,
+    updated_at    DATETIME2(0)      NULL,
+    updated_by    NVARCHAR(50)      NULL,
     CONSTRAINT pk_lotes            PRIMARY KEY (id),
     CONSTRAINT fk_lotes_producto   FOREIGN KEY (producto_id)  REFERENCES productos(id),
     CONSTRAINT fk_lotes_proveedor  FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
@@ -239,6 +241,10 @@ CREATE TABLE venta_detalle (
     cantidad        INT               NOT NULL,
     precio_unitario DECIMAL(12,2)     NOT NULL,
     subtotal        AS CAST(cantidad * precio_unitario AS DECIMAL(12,2)) PERSISTED,
+    created_at      DATETIME2(0)      NOT NULL CONSTRAINT df_vd_creat DEFAULT (SYSDATETIME()),
+    created_by      NVARCHAR(50)      NULL,
+    updated_at      DATETIME2(0)      NULL,
+    updated_by      NVARCHAR(50)      NULL,
     CONSTRAINT pk_venta_detalle          PRIMARY KEY (id),
     CONSTRAINT uq_venta_detalle_linea    UNIQUE (venta_id, producto_id),
     CONSTRAINT fk_venta_detalle_venta    FOREIGN KEY (venta_id)    REFERENCES ventas(id),
@@ -273,6 +279,10 @@ CREATE TABLE transacciones (
     venta_detalle_id INT                NULL,
     usuario_id       INT                NOT NULL,
     fecha            DATETIME2(0)       NOT NULL CONSTRAINT df_transacciones_fecha DEFAULT (SYSDATETIME()),
+    created_at       DATETIME2(0)       NOT NULL CONSTRAINT df_tx_creat DEFAULT (SYSDATETIME()),
+    created_by       NVARCHAR(50)       NULL,
+    updated_at       DATETIME2(0)       NULL,
+    updated_by       NVARCHAR(50)       NULL,
     CONSTRAINT pk_transacciones              PRIMARY KEY (id),
     CONSTRAINT fk_transacciones_producto     FOREIGN KEY (producto_id)      REFERENCES productos(id),
     CONSTRAINT fk_transacciones_sucursal     FOREIGN KEY (sucursal_id)      REFERENCES sucursales(id),
@@ -284,12 +294,14 @@ CREATE TABLE transacciones (
                                                              'TRANSFERENCIA_INGRESO','AJUSTE')),
     CONSTRAINT ck_transacciones_cantidad     CHECK (cantidad > 0),
     CONSTRAINT ck_transacciones_stock        CHECK (stock_resultante >= 0),
-    -- Coherencia entre el tipo de movimiento y su documento de origen
+    -- Coherencia entre el tipo de movimiento y su documento de origen.
+    -- AJUSTE puede tender la reversa de un lote (RF04) o de una venta (RF15).
     CONSTRAINT ck_transacciones_origen       CHECK (
            (tipo = 'INGRESO' AND venta_detalle_id IS NULL)
         OR (tipo = 'SALIDA'  AND venta_detalle_id IS NOT NULL)
-        OR (tipo IN ('TRANSFERENCIA_SALIDA','TRANSFERENCIA_INGRESO','AJUSTE')
-            AND lote_id IS NULL AND venta_detalle_id IS NULL)),
+        OR (tipo IN ('TRANSFERENCIA_SALIDA','TRANSFERENCIA_INGRESO')
+            AND lote_id IS NULL AND venta_detalle_id IS NULL)
+        OR (tipo = 'AJUSTE' AND (lote_id IS NULL OR venta_detalle_id IS NULL))),
     -- Solo las transferencias viajan en pareja
     CONSTRAINT ck_transacciones_grupo        CHECK (
            (tipo LIKE 'TRANSFERENCIA%' AND grupo_id IS NOT NULL)

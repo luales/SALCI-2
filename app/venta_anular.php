@@ -34,7 +34,7 @@ try {
 
         $sucursal = (int) $venta['sucursal_id'];
         $lineas = $pdo->prepare(
-            'SELECT producto_id, cantidad
+            'SELECT id, producto_id, cantidad
                FROM venta_detalle WHERE venta_id = :id
               ORDER BY producto_id'
         );
@@ -54,7 +54,9 @@ try {
                 $sucursal,
                 (int) $item['cantidad'],
                 'AJUSTE',
-                $user
+                $user,
+                null,
+                (int) $item['id']
             );
         }
 

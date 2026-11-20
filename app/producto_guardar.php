@@ -40,6 +40,12 @@ try {
         $pdo, $id, $sku, $nombre, $precioDb, $minimo, $aud
     ): void {
         if ($id > 0) {
+            $existe = $pdo->prepare('SELECT 1 FROM productos WHERE id = :id');
+            $existe->execute([':id' => $id]);
+            if ($existe->fetchColumn() === false) {
+                throw new RuntimeException('El producto ya no existe.');
+            }
+
             $upd = $pdo->prepare(
                 'UPDATE productos
                     SET sku = :sku, nombre = :nombre, precio = :precio,
@@ -55,10 +61,6 @@ try {
                 ':by'     => $aud['by'],
                 ':id'     => $id,
             ]);
-
-            if ($upd->rowCount() === 0) {
-                throw new RuntimeException('El producto ya no existe.');
-            }
 
             return;
         }

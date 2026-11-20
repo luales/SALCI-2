@@ -3,28 +3,51 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/partials.php';
+require_once __DIR__ . '/reportes_lib.php';
 
 $user    = auth_require();
+$pdo     = db();
+$perfil  = informes_contexto($user, $pdo);
+$sucId   = (int) $perfil['sucursal_id'];
 $saludo  = rol_saludo($user['rol']);
 $claims  = auth_jwt_validar($_SESSION['access_token'] ?? null);
 $tokenExp = $claims !== null ? date('d/m/Y H:i', (int) $claims['exp']) : '—';
 
 /* Datos reales de la conexión, para demostrar que se llegó a SQL Server */
-$info    = db()->query("SELECT DB_NAME() AS base, @@VERSION AS version")->fetch();
+$info    = $pdo->query("SELECT DB_NAME() AS base, @@VERSION AS version")->fetch();
 $version = trim(strtok((string) $info['version'], "\n"));
 
-$criticos = (int) db()->query(
-    "SELECT COUNT(*)
-       FROM inventario i
-       JOIN productos p ON p.id = i.producto_id
-      WHERE i.stock <= p.stock_minimo"
+$totales = (int) $pdo->query(
+    'SELECT COUNT(*) FROM productos WHERE activo = 1'
 )->fetchColumn();
 
-$pendientes = (int) db()->query(
-    "SELECT COUNT(*)
+$sqlCriticos = "SELECT COUNT(*)
+       FROM inventario i
+       JOIN productos p ON p.id = i.producto_id
+      WHERE p.activo = 1
+        AND i.stock <= p.stock_minimo";
+$parCriticos = [];
+if ($sucId > 0) {
+    $sqlCriticos .= ' AND i.sucursal_id = :s1';
+    $parCriticos[':s1'] = $sucId;
+}
+$cr = $pdo->prepare($sqlCriticos);
+$cr->execute($parCriticos);
+$criticos = (int) $cr->fetchColumn();
+
+$sqlPendientes = "SELECT COUNT(*)
        FROM despachos_pendientes
-      WHERE estado IN ('PENDIENTE','EN_RUTA')"
-)->fetchColumn();
+      WHERE estado IN ('PENDIENTE','EN_RUTA')";
+$parPendientes = [];
+if ($sucId > 0) {
+    $sqlPendientes .= ' AND sucursal_id = :s2';
+    $parPendientes[':s2'] = $sucId;
+}
+$pe = $pdo->prepare($sqlPendientes);
+$pe->execute($parPendientes);
+$pendientes = (int) $pe->fetchColumn();
+
+$top5 = top5_informe($pdo, $sucId);
 
 ?>
 <!doctype html>
@@ -63,6 +86,10 @@ $pendientes = (int) db()->query(
 
         <section class="indicadores">
             <article class="indicador">
+                <span class="valor"><?= $totales ?></span>
+                <span class="etiqueta">Productos totales</span>
+            </article>
+            <article class="indicador indicador-critico">
                 <span class="valor"><?= $criticos ?></span>
                 <span class="etiqueta">Productos en stock crítico</span>
             </article>
@@ -94,6 +121,27 @@ $pendientes = (int) db()->query(
                 Si ves esta pantalla, PHP está hablando con SQL Server y la
                 sesión quedó autenticada contra la tabla <code>usuarios</code>.
             </p>
+        </section>
+
+        <section class="detalle">
+            <h2>Top 5 de rotaci&oacute;n</h2>
+            <div class="tabla-scroll">
+                <table class="tabla">
+                    <thead><tr><th>#</th><th>sku</th><th>producto</th><th>unidades</th><th>monto</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($top5 as $i => $f): ?>
+                        <tr>
+                            <td><?= $i + 1 ?></td>
+                            <td><?= e((string) $f['sku']) ?></td>
+                            <td><?= e((string) $f['producto']) ?></td>
+                            <td><?= (int) $f['unidades'] ?></td>
+                            <td><?= pesos((int) round((float) $f['monto'] * 100)) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <p class="nota">Unidades vendidas en ventas completadas.</p>
         </section>
     </main>
 </body>

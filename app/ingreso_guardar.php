@@ -27,16 +27,20 @@ if ($id > 0 && !$esAdmin) {
 
 try {
     if ($id > 0) {
-        op_tx($pdo, static function () use ($pdo, $id, $proveedor, $numero, $fecha): void {
+        op_tx($pdo, static function () use ($pdo, $id, $proveedor, $numero, $fecha, $user): void {
+            $aud = op_auditoria($user);
             $st = $pdo->prepare(
                 'UPDATE lotes
-                    SET proveedor_id = :prov, numero_lote = :numero, fecha_ingreso = :fecha
+                    SET proveedor_id = :prov, numero_lote = :numero, fecha_ingreso = :fecha,
+                        updated_at = :at, updated_by = :by
                   WHERE id = :id AND anulado = 0'
             );
             $st->execute([
                 ':prov'   => $proveedor > 0 ? $proveedor : null,
                 ':numero' => $numero !== '' ? $numero : null,
                 ':fecha'  => $fecha ?? date('Y-m-d 12:00:00'),
+                ':at'     => $aud['at'],
+                ':by'     => $aud['by'],
                 ':id'     => $id,
             ]);
         });
@@ -77,10 +81,10 @@ try {
         $ins = $pdo->prepare(
             'INSERT INTO lotes
                 (producto_id, sucursal_id, cantidad, proveedor_id, numero_lote,
-                 fecha_ingreso, anulado, created_by)
+                 fecha_ingreso, anulado, created_by, updated_at, updated_by)
              OUTPUT INSERTED.id
              VALUES (:producto, :sucursal, :cantidad, :proveedor, :numero,
-                     :fecha, 0, :by)'
+                     :fecha, 0, :by, :uat, :uby)'
         );
         $ins->execute([
             ':producto'  => $producto,
@@ -90,6 +94,8 @@ try {
             ':numero'    => $numero !== '' ? $numero : null,
             ':fecha'     => $fecha,
             ':by'        => $aud['by'],
+            ':uat'       => $aud['at'],
+            ':uby'       => $aud['by'],
         ]);
 
         $loteId = (int) $ins->fetchColumn();

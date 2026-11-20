@@ -81,5 +81,7 @@ alerta en BD → COMMIT → Resend API (POST /emails) + webhook (POST JSON)
 ```
 
 - Si `RF02_RESEND_API_KEY` está vacía, se usa `mail()` como fallback.
+- `op_http_post_json()` usa cURL si está cargado; si no, usa streams HTTP
+  nativos (`allow_url_fopen`). No hace falta habilitar `php_curl.dll` en XAMPP.
 - Los errores se escriben en `error_log`, nunca se lanzan al usuario.
 - La key se envía solo en el header `Authorization` del servidor PHP.

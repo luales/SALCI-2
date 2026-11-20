@@ -70,7 +70,8 @@ function indicadores_informe(PDO $pdo, int $sucursalId): array
         'SELECT COUNT(*) AS n
            FROM inventario i
            JOIN productos p ON p.id = i.producto_id
-          WHERE i.stock <= p.stock_minimo' . $fInventario,
+          WHERE p.activo = 1
+            AND i.stock <= p.stock_minimo' . $fInventario,
         $pInventario
     )[0]['n'];
 
@@ -96,7 +97,9 @@ function indicadores_informe(PDO $pdo, int $sucursalId): array
         $pInventario
     )[0]['n'];
 
-    $productos = (int) $pdo->query('SELECT COUNT(*) FROM productos')->fetchColumn();
+    $productos = (int) $pdo->query(
+        'SELECT COUNT(*) FROM productos WHERE activo = 1'
+    )->fetchColumn();
 
     return [
         'productos'  => (int) $productos,

@@ -32,18 +32,22 @@ try {
             throw new RuntimeException('El lote no existe o ya está anulado.');
         }
 
-        /* Reversa por un AJUSTE: el kardex queda completo y auditable. */
+        /* Reversa por un AJUSTE ligado al lote: el kardex queda completo y auditable. */
         op_mover_stock(
             $pdo,
             (int) $lote['producto_id'],
             (int) $lote['sucursal_id'],
             -((int) $lote['cantidad']),
             'AJUSTE',
-            $user
+            $user,
+            $id
         );
 
-        $upd = $pdo->prepare('UPDATE lotes SET anulado = 1 WHERE id = :id');
-        $upd->execute([':id' => $id]);
+        $aud = op_auditoria($user);
+        $upd = $pdo->prepare(
+            'UPDATE lotes SET anulado = 1, updated_at = :at, updated_by = :by WHERE id = :id'
+        );
+        $upd->execute([':at' => $aud['at'], ':by' => $aud['by'], ':id' => $id]);
     });
 
     op_flash('ok', 'Ingreso anulado: stock revertido y alta en el kardex.');

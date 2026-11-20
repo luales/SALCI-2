@@ -259,6 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ivaCents   = (int) round($subtotalCents * 0.19);
             $totalCents = $subtotalCents + $ivaCents;
             $decimal    = static fn(int $c): string => number_format($c / 100, 2, '.', '');
+            $aud        = op_auditoria($user);
 
             $ins = $pdo->prepare(
                 "INSERT INTO ventas
@@ -277,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ins->bindValue(':sub', $decimal($subtotalCents));
             $ins->bindValue(':iva', $decimal($ivaCents));
             $ins->bindValue(':total', $decimal($totalCents));
-            $ins->bindValue(':by', (string) $user['username']);
+            $ins->bindValue(':by', $aud['by']);
             $ins->execute();
 
             $ventaId = (int) $ins->fetchColumn();
@@ -290,14 +291,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($items as $it) {
                 $insD = $pdo->prepare(
                     'INSERT INTO venta_detalle
-                        (venta_id, producto_id, cantidad, precio_unitario)
+                        (venta_id, producto_id, cantidad, precio_unitario,
+                         created_at, created_by, updated_at, updated_by)
                      OUTPUT INSERTED.id
-                     VALUES (:venta, :producto, :cantidad, :precio)'
+                     VALUES (:venta, :producto, :cantidad, :precio,
+                             :creat, :cby, :upat, :upy)'
                 );
                 $insD->bindValue(':venta', $ventaId, PDO::PARAM_INT);
                 $insD->bindValue(':producto', $it['producto_id'], PDO::PARAM_INT);
                 $insD->bindValue(':cantidad', $it['cantidad'], PDO::PARAM_INT);
                 $insD->bindValue(':precio', $decimal($it['precioCents']));
+                $insD->bindValue(':creat', $aud['at']);
+                $insD->bindValue(':cby', $aud['by']);
+                $insD->bindValue(':upat', $aud['at']);
+                $insD->bindValue(':upy', $aud['by']);
                 $insD->execute();
 
                 $detalleId = (int) $insD->fetchColumn();
@@ -329,8 +336,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mov = $pdo->prepare(
                     "INSERT INTO transacciones
                         (tipo, producto_id, sucursal_id, cantidad, stock_resultante,
-                         venta_detalle_id, usuario_id)
-                     VALUES ('SALIDA', :producto, :suc, :cantidad, :stock, :detalle, :usuario)"
+                         venta_detalle_id, usuario_id, created_at, created_by,
+                         updated_at, updated_by)
+                     VALUES ('SALIDA', :producto, :suc, :cantidad, :stock, :detalle,
+                             :usuario, :creat, :cby, :upat, :upy)"
                 );
                 $mov->bindValue(':producto', $it['producto_id'], PDO::PARAM_INT);
                 $mov->bindValue(':suc', $sucursalId, PDO::PARAM_INT);
@@ -338,6 +347,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mov->bindValue(':stock', $nuevoStock, PDO::PARAM_INT);
                 $mov->bindValue(':detalle', $detalleId, PDO::PARAM_INT);
                 $mov->bindValue(':usuario', (int) $user['id'], PDO::PARAM_INT);
+                $mov->bindValue(':creat', $aud['at']);
+                $mov->bindValue(':cby', $aud['by']);
+                $mov->bindValue(':upat', $aud['at']);
+                $mov->bindValue(':upy', $aud['by']);
                 $mov->execute();
 
                 /* RF02: alerta si el saldo queda en o bajo el mínimo,

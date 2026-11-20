@@ -266,6 +266,36 @@ INSERT INTO despachos_pendientes
 GO
 
 /* ---------------------------------------------------------------------
+   9.1 Backfill de auditoria RF13
+   Deja los datos de demostracion con created_by/updated_by completos.
+   --------------------------------------------------------------------- */
+UPDATE l
+   SET l.updated_at = l.created_at,
+       l.updated_by = ISNULL(l.created_by, 'SISTEMA')
+  FROM lotes l
+ WHERE l.updated_at IS NULL;
+
+UPDATE d
+   SET d.created_at = v.fecha,
+       d.created_by = ISNULL(u.username, 'SISTEMA'),
+       d.updated_at = v.fecha,
+       d.updated_by = ISNULL(u.username, 'SISTEMA')
+  FROM venta_detalle d
+  JOIN ventas v ON v.id = d.venta_id
+  LEFT JOIN usuarios u ON u.id = v.usuario_id
+ WHERE d.created_by IS NULL;
+
+UPDATE t
+   SET t.created_at = t.fecha,
+       t.created_by = ISNULL(u.username, 'SISTEMA'),
+       t.updated_at = t.fecha,
+       t.updated_by = ISNULL(u.username, 'SISTEMA')
+  FROM transacciones t
+  LEFT JOIN usuarios u ON u.id = t.usuario_id
+ WHERE t.created_by IS NULL;
+GO
+
+/* ---------------------------------------------------------------------
    10. Verificacion
    --------------------------------------------------------------------- */
 SELECT 'sucursales' AS tabla, COUNT(*) AS filas FROM sucursales

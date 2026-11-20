@@ -36,6 +36,8 @@ SALCI PHP/
 │  ├─ 05_migracion_pos.sql  agrega productos.precio a bases v3 ya creadas
 │  ├─ 06_migracion_productos_activo.sql  baja lógica de productos
 │  ├─ 07_migracion_lotes_anulado.sql     anulación de ingresos (RF04)
+│  ├─ 08_migracion_auditoria.sql         columnas de auditoría (RF13)
+│  ├─ 09_migracion_ajuste_origen.sql     reversas ligadas a lote/venta
 │  └─ diagrama.dbml     modelo para dbdiagram.io (Figura 3)
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
@@ -104,7 +106,14 @@ Si la base ya existía antes del POS (esquema v3), ejecutar una sola vez:
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\05_migracion_pos.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\06_migracion_productos_activo.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\07_migracion_lotes_anulado.sql
+sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -I -i db\08_migracion_auditoria.sql
+sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\09_migracion_ajuste_origen.sql
 ```
+
+La migracion 08 agrega las columnas de auditoria de RF13 y se ejecuta con
+`-I` por la columna calculada persistida de `venta_detalle`. La 09 ajusta
+`ck_transacciones_origen` para que una reversa `AJUSTE` pueda conservar el
+`lote_id` (RF04) o el `venta_detalle_id` (RF15) sin perder la auditoría.
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
 Es útil antes de una presentación; no ejecutar sobre datos reales.
@@ -223,7 +232,10 @@ Constantes opcionales en `app/config.php` (o `config.local.php`):
 | `RF02_WEBHOOK_URL` | URL que recibe un `POST` JSON con la alerta. |
 
 Si las dos constantes RF02 quedan vacías, las alertas se guardan igual en
-`registro_alertas` y no se intenta envío externo.
+`registro_alertas` y no se intenta envío externo. El envío usa cURL si está
+disponible y, si no, streams HTTP nativos (`allow_url_fopen`), por lo que
+también funciona en el Apache de XAMPP sin la extensión `curl`. El webhook
+sigue siendo opcional.
 
 ## 6. Modelo de datos
 
