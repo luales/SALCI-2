@@ -328,6 +328,52 @@ function op_notificar_alertas_nuevas(PDO $pdo, int $desdeId): void
     }
 }
 
+/** Envío por Resend API (RF02). La key viaja solo en el servidor. */
+function op_enviar_resend(string $apiKey, string $destino, string $asunto, string $cuerpo): void
+{
+    if (!function_exists('curl_init')) {
+        error_log('SALCI RF02 Resend: falta la extensión curl.');
+
+        return;
+    }
+
+    $from  = defined('RF02_RESEND_FROM') ? (string) RF02_RESEND_FROM : 'SALCI <onboarding@resend.dev>';
+    $datos = json_encode([
+        'from'    => $from,
+        'to'      => [$destino],
+        'subject' => $asunto,
+        'text'    => $cuerpo,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    $ch = curl_init('https://api.resend.com/emails');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $datos,
+        CURLOPT_HTTPHEADER     => [
+            'Authorization: Bearer ' . $apiKey,
+            'Content-Type: application/json',
+        ],
+        CURLOPT_TIMEOUT        => 5,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_RETURNTRANSFER => true,
+    ]);
+
+    $respuesta = curl_exec($ch);
+    $codigo    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error     = curl_error($ch);
+    curl_close($ch);
+
+    if ($error !== '') {
+        error_log('SALCI RF02 Resend: ' . $error);
+
+        return;
+    }
+
+    if ($codigo < 200 || $codigo >= 300) {
+        error_log('SALCI RF02 Resend HTTP ' . $codigo . ': ' . mb_substr((string) $respuesta, 0, 300));
+    }
+}
+
 /** Mejor esfuerzo: si falla correo/webhook NO se revierte la base de datos. */
 function op_notificar(array $alerta): void
 {
@@ -337,8 +383,14 @@ function op_notificar(array $alerta): void
 
     $destino = defined('RF02_EMAIL_DESTINO') ? (string) RF02_EMAIL_DESTINO : '';
     if ($destino !== '' && filter_var($destino, FILTER_VALIDATE_EMAIL)) {
+        $apiKey = defined('RF02_RESEND_API_KEY') ? trim((string) RF02_RESEND_API_KEY) : '';
+
         try {
-            @mail($destino, $asunto, $cuerpo, 'Content-Type: text/plain; charset=UTF-8');
+            if ($apiKey !== '') {
+                op_enviar_resend($apiKey, $destino, $asunto, $cuerpo);
+            } else {
+                @mail($destino, $asunto, $cuerpo, 'Content-Type: text/plain; charset=UTF-8');
+            }
         } catch (Throwable $e) {
             error_log('SALCI RF02 correo: ' . $e->getMessage());
         }

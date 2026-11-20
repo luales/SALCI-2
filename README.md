@@ -218,6 +218,8 @@ Constantes opcionales en `app/config.php` (o `config.local.php`):
 |---|---|
 | `JWT_SECRET` | Clave HS256 del token RF05 (cambiar en producción). |
 | `RF02_EMAIL_DESTINO` | Correo que recibe alertas de stock crítico. |
+| `RF02_RESEND_API_KEY` | Key `sending_access` de Resend para enviar el correo (en `config.local.php`). |
+| `RF02_RESEND_FROM` | Remitente verificado o `onboarding@resend.dev` en pruebas. |
 | `RF02_WEBHOOK_URL` | URL que recibe un `POST` JSON con la alerta. |
 
 Si las dos constantes RF02 quedan vacías, las alertas se guardan igual en
@@ -336,3 +338,4 @@ C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak
   respuestas a las preguntas habituales de la defensa.
 - `docs/capturas/`: capturas del demo limpio (login, panel, POS y los CRUD).
 - `docs/MER-corregido.md` y `db/diagrama.dbml`: modelo y relaciones.
+- `docs/rf02-resend.md`: configuración de Resend y webhook para alertas RF02.

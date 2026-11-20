@@ -34,5 +34,11 @@ defined('SESSION_NAME') || define('SESSION_NAME', 'salci_sid');
 defined('RF02_EMAIL_DESTINO') || define('RF02_EMAIL_DESTINO', '');
 defined('RF02_WEBHOOK_URL')   || define('RF02_WEBHOOK_URL', '');
 
+/* RF02 correo vía Resend (API key con permiso sending_access).
+   RF02_RESEND_FROM debe ser un dominio verificado o, en pruebas,
+   SALCI <onboarding@resend.dev>. La key se define en config.local.php. */
+defined('RF02_RESEND_API_KEY') || define('RF02_RESEND_API_KEY', '');
+defined('RF02_RESEND_FROM')    || define('RF02_RESEND_FROM', 'SALCI <onboarding@resend.dev>');
+
 /* RF05: clave para firmar el JWT HS256 (24 h). Sobreescribir en producción. */
 defined('JWT_SECRET') || define('JWT_SECRET', 'SALCI-CAMBIAR-EN-PRODUCCION-2026');

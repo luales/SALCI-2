@@ -18,3 +18,14 @@ declare(strict_types=1);
 
 /* Mostrar errores detallados (útil en desarrollo, no en producción) */
 // define('APP_DEBUG', true);
+
+/* RF02: correo de alertas vía Resend.
+   Usar una API key con permiso sending_access (NUNCA full_access).
+   El remitente onboarding@resend.dev solo sirve para pruebas y el
+   destinatario debe ser el correo de la cuenta de Resend. */
+// define('RF02_RESEND_API_KEY', 're_xxxx');
+// define('RF02_RESEND_FROM', 'SALCI <onboarding@resend.dev>');
+// define('RF02_EMAIL_DESTINO', 'tu-correo@ejemplo.com');
+
+/* RF02: segundo canal (JSON POST). webhook.site sirve para la demo. */
+// define('RF02_WEBHOOK_URL', 'https://webhook.site/xxxx');
