@@ -1,7 +1,7 @@
-﻿/* =====================================================================
+/* =====================================================================
    PROYECTO SALCI - Base de Datos
    Script 01: Esquema fisico (SQL Server 2025 Express / SQLEXPRESS)
-   Version 3 - Correccion RF15/RF08 + normalizacion 3FN (productos / inventario)
+   Version 4 - RF15/RF08 + 3FN + POS/auditoria (incluye las migraciones 05-09)
 
    PROVEEDORES, COMPRADORES y VENTAS pasan a ser tablas independientes.
    Se elimina la duplicacion de datos de contraparte en las transacciones.
@@ -348,7 +348,10 @@ CREATE TABLE registro_alertas (
     mensaje         NVARCHAR(300)     NOT NULL,
     stock_al_momento INT              NOT NULL,
     leida           BIT               NOT NULL CONSTRAINT df_alertas_leida DEFAULT (0),
+    created_at      DATETIME2(0)      NOT NULL CONSTRAINT df_alertas_creat DEFAULT (SYSDATETIME()),
     created_by      NVARCHAR(50)      NULL,   -- 'SISTEMA' para las automaticas
+    updated_at      DATETIME2(0)      NULL,
+    updated_by      NVARCHAR(50)      NULL,
     CONSTRAINT pk_registro_alertas        PRIMARY KEY (id),
     CONSTRAINT fk_alertas_producto        FOREIGN KEY (producto_id) REFERENCES productos(id),
     CONSTRAINT fk_alertas_sucursal        FOREIGN KEY (sucursal_id) REFERENCES sucursales(id),
@@ -375,6 +378,90 @@ CREATE INDEX ix_alertas_pendientes      ON registro_alertas(sucursal_id, leida)
 GO
 
 /* ---------------------------------------------------------------------
+/* ---------------------------------------------------------------------
+   13b. AUDITORIA AUTOMATICA (RF13)
+   Defaults en updated_* para el alta y un trigger AFTER UPDATE por tabla.
+   NO se usan triggers AFTER INSERT: SQL Server rechaza
+   `INSERT ... OUTPUT INSERTED.id` si la tabla tiene triggers activos.
+   --------------------------------------------------------------------- */
+DECLARE @tabla SYSNAME, @nombre SYSNAME, @sql NVARCHAR(MAX),
+        @pkjoin NVARCHAR(MAX), @trigger SYSNAME;
+
+DECLARE cur_defaults CURSOR LOCAL FAST_FORWARD FOR
+    SELECT TABLE_NAME FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE COLUMN_NAME = 'updated_at'
+     GROUP BY TABLE_NAME;
+OPEN cur_defaults;
+FETCH NEXT FROM cur_defaults INTO @tabla;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM sys.default_constraints dc
+                    WHERE dc.parent_object_id = OBJECT_ID(@tabla)
+                      AND dc.parent_column_id = COLUMNPROPERTY(OBJECT_ID(@tabla), 'updated_at', 'ColumnId'))
+    BEGIN
+        SET @nombre = N'df_' + @tabla + N'_uat';
+        SET @sql = N'ALTER TABLE ' + QUOTENAME(@tabla) + N' ADD CONSTRAINT '
+                 + QUOTENAME(@nombre) + N' DEFAULT (SYSDATETIME()) FOR updated_at';
+        EXEC sp_executesql @sql;
+    END
+    IF NOT EXISTS (SELECT 1 FROM sys.default_constraints dc
+                    WHERE dc.parent_object_id = OBJECT_ID(@tabla)
+                      AND dc.parent_column_id = COLUMNPROPERTY(OBJECT_ID(@tabla), 'updated_by', 'ColumnId'))
+    BEGIN
+        SET @nombre = N'df_' + @tabla + N'_uby';
+        SET @sql = N'ALTER TABLE ' + QUOTENAME(@tabla) + N' ADD CONSTRAINT '
+                 + QUOTENAME(@nombre) + N' DEFAULT (SUSER_SNAME()) FOR updated_by';
+        EXEC sp_executesql @sql;
+    END
+    FETCH NEXT FROM cur_defaults INTO @tabla;
+END
+CLOSE cur_defaults;
+DEALLOCATE cur_defaults;
+
+DECLARE cur_aud CURSOR LOCAL FAST_FORWARD FOR
+    SELECT c.TABLE_NAME,
+           STUFF((SELECT ', t.' + QUOTENAME(k.COLUMN_NAME) + ' = i.' + QUOTENAME(k.COLUMN_NAME)
+                    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                    JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE k
+                      ON k.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+                     AND k.TABLE_NAME = tc.TABLE_NAME
+                   WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY'
+                     AND k.TABLE_NAME = c.TABLE_NAME
+                   FOR XML PATH('')), 1, 1, '')
+      FROM INFORMATION_SCHEMA.COLUMNS c
+     WHERE c.COLUMN_NAME = 'updated_at'
+     GROUP BY c.TABLE_NAME;
+
+OPEN cur_aud;
+FETCH NEXT FROM cur_aud INTO @tabla, @pkjoin;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+    IF @pkjoin IS NOT NULL AND @pkjoin <> ''
+    BEGIN
+        SET @trigger = N'trg_aud_' + @tabla;
+        SET @sql = N'CREATE OR ALTER TRIGGER ' + QUOTENAME(@trigger) + N'
+   ON ' + QUOTENAME(@tabla) + N'
+   AFTER UPDATE
+AS
+BEGIN
+    SET NOCOUNT ON;
+    UPDATE t
+       SET updated_at = SYSDATETIME(),
+           updated_by = CASE WHEN UPDATE(updated_by) AND i.updated_by IS NOT NULL
+                             THEN i.updated_by
+                             ELSE ISNULL(t.updated_by, SUSER_SNAME())
+                        END
+      FROM ' + QUOTENAME(@tabla) + N' t
+      INNER JOIN inserted i ON ' + @pkjoin + N';
+END';
+        EXEC sp_executesql @sql;
+    END
+    FETCH NEXT FROM cur_aud INTO @tabla, @pkjoin;
+END
+CLOSE cur_aud;
+DEALLOCATE cur_aud;
+GO
+
    14. VISTA DE APOYO  (RF10: stock en vivo con semaforo)
    --------------------------------------------------------------------- */
 CREATE VIEW vw_stock_en_vivo
@@ -389,8 +476,9 @@ SELECT  p.id                                          AS producto_id,
         CASE WHEN i.stock <= p.stock_minimo THEN 1 ELSE 0 END AS es_critico
 FROM inventario i
 INNER JOIN productos  p ON p.id = i.producto_id
-INNER JOIN sucursales s ON s.id = i.sucursal_id;
+INNER JOIN sucursales s ON s.id = i.sucursal_id
+WHERE p.activo = 1;
 GO
 
-PRINT 'Esquema SALCI v3 creado correctamente. (11 tablas + inventario, 3FN)';
+PRINT 'Esquema SALCI v4 creado correctamente. (12 tablas, 3FN + auditoria automatica)';
 GO

@@ -37,6 +37,22 @@ DELETE FROM usuarios;
 DELETE FROM sucursales;
 GO
 
+/* Reiniciar los IDENTITY para que cada recarga del demo produzca los mismos
+   IDs (evita que los productos queden 9-16 después de repetir el seed). */
+DBCC CHECKIDENT('transacciones', RESEED, 0);
+DBCC CHECKIDENT('registro_alertas', RESEED, 0);
+DBCC CHECKIDENT('despachos_pendientes', RESEED, 0);
+DBCC CHECKIDENT('venta_detalle', RESEED, 0);
+DBCC CHECKIDENT('ventas', RESEED, 0);
+DBCC CHECKIDENT('lotes', RESEED, 0);
+DBCC CHECKIDENT('inventario', RESEED, 0);
+DBCC CHECKIDENT('compradores', RESEED, 0);
+DBCC CHECKIDENT('proveedores', RESEED, 0);
+DBCC CHECKIDENT('productos', RESEED, 0);
+DBCC CHECKIDENT('usuarios', RESEED, 0);
+DBCC CHECKIDENT('sucursales', RESEED, 0);
+GO
+
 /* ---------------------------------------------------------------------
    2. Maestros
    Las sucursales usan IDs fijos (1,2,3) porque el resto del seed las

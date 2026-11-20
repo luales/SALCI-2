@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/operaciones.php';
 require_once __DIR__ . '/partials.php';
 
 $user = auth_require();
@@ -9,7 +10,8 @@ $pdo  = db();
 
 $sucursalId = (int) ($_POST['sucursal_id'] ?? $_GET['sucursal_id'] ?? 0);
 $pedido     = (string) ($_POST['volver'] ?? $_GET['volver'] ?? '');
-$volver     = in_array($pedido, ['pos.php', 'despachos.php'], true) ? $pedido : 'pos.php';
+$volver     = in_array($pedido, ['pos.php', 'despachos.php', 'compradores.php'], true)
+    ? $pedido : 'pos.php';
 
 $error = null;
 $datos = [
@@ -27,6 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach (array_keys($datos) as $campo) {
             $datos[$campo] = trim((string) ($_POST[$campo] ?? ''));
         }
+        /* RF08: misma normalización que proveedores (mayúsculas) para que el
+           índice único no acepte el mismo RUT con distinta caja. */
+        $datos['rut'] = op_rut($datos['rut']) ?? '';
 
         if ($datos['nombre'] === '') {
             $error = 'El nombre del comprador es obligatorio.';
@@ -86,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="assets/tema.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">

@@ -4,8 +4,14 @@ Sistema de Alertas Logísticas y Control de Inventario.
 Proyecto de Bases de Datos — Evaluación 4 (hito).
 
 **Estado:** base de datos implementada, poblada, consultada y respaldada.
-Prototipo PHP: login, panel por rol, alta de compradores, venta POS (RF15),
-dashboard, stock en vivo y exportación CSV (RF03/RF10/RF11/RF14) funcionando.
+Prototipo PHP completo: login JWT, panel por rol, POS (RF15), reportes y CSV,
+CRUD de productos, proveedores/lotes, despachos, transferencias, usuarios,
+sucursales y ventas N:N; notificaciones RF02 y auditoría RF13.
+
+**Equipo donde está corriendo ahora:** SQL Server 2025 Express, instancia
+`.\SQLEXPRESS01`, base de datos **`prueba`** (ver §3.0). La instancia
+`.\SQLEXPRESS` está detenida y no se puede iniciar sin permisos de
+administrador, por eso `app/config.local.php` apunta a `SQLEXPRESS01/prueba`.
 
 ---
 
@@ -27,7 +33,7 @@ dashboard, stock en vivo y exportación CSV (RF03/RF10/RF11/RF14) funcionando.
 ## 2. Estructura del proyecto
 
 ```
-SALCI PHP/
+SALCI-2/
 ├─ db/
 │  ├─ 01_schema.sql     12 tablas, 22 FK, 31 índices, 1 vista
 │  ├─ 02_seed.sql       datos de demostración (borra y recarga)
@@ -38,18 +44,26 @@ SALCI PHP/
 │  ├─ 07_migracion_lotes_anulado.sql     anulación de ingresos (RF04)
 │  ├─ 08_migracion_auditoria.sql         columnas de auditoría (RF13)
 │  ├─ 09_migracion_ajuste_origen.sql     reversas ligadas a lote/venta
+│  ├─ 10_verificacion_rnf.sql       comprueba RNF02 (FK/CHECK) y RNF05 (índices)
+│  ├─ 11_migracion_auditoria_auto.sql    RF13: alertas + triggers AFTER UPDATE
 │  └─ diagrama.dbml     modelo para dbdiagram.io (Figura 3)
 ├─ docs/
 │  ├─ MER-corregido.md  corrección RF15/RF08 + normalización
 │  ├─ auditoria-3FN.md  auditoría formal de normalización
 │  ├─ como-ejecutar.md  guía para clonar y ejecutar en otro PC
-│  └─ capturas/         login, panel admin y panel trabajador
+│  ├─ defensa.md        guion de presentación y respuestas probables
+│  ├─ rf02-resend.md    correo/webhook de alertas RF02
+│  ├─ rnf.md            requerimientos no funcionales RNF01–RNF06
+│  ├─ figuras/          Figura 1 (casos de uso), 2 (BPMN) y 3 (MER) en Mermaid
+│  └─ capturas/         login, panel, POS, reportes y CRUD
 └─ app/                    prototipo PHP
    ├─ config.php           DSN y parámetros
    ├─ config.local.php.example  plantilla de configuración local
    ├─ db.php               conexión PDO única
-   ├─ auth.php             sesión, hash y roles
-   ├─ login.php            formulario de ingreso
+   ├─ auth.php             sesión, hash, JWT y roles
+   ├─ errores.php          RNF06: causa + acción en cada error
+    ├─ health.php           RNF04: endpoint público GET /health
+    ├─ login.php            formulario de ingreso
    ├─ index.php            panel (Hola admin / Hola trabajador)
    ├─ logout.php           cierre de sesión
    ├─ partials.php         barra de navegación y formato de dinero
@@ -79,13 +93,43 @@ SALCI PHP/
    ├─ sucursal_guardar.php / sucursal_estado.php
    ├─ ventas.php           CRUD de la tabla N:N (ventas + venta_detalle)
    ├─ venta_anular.php     baja con reversa de stock y kardex
-   └─ assets/style.css     estilos
+   └─ assets/
+   ├─ style.css         estilos slate-blue (responsive + modo oscuro)
+   └─ tema.js           RNF06: conmutador de tema persistente
 ```
 
 ## 3. Puesta en marcha
 
+### 3.0 Este equipo (instancia `SQLEXPRESS01`, base `prueba`)
+
+La base `prueba` ya existe y tiene las 12 tablas de SALCI más la tabla
+original del curso, conservada como `productos_antiguo`. `app/config.local.php`
+(ignorado por Git) contiene:
+
+```php
+define('DB_DSN', 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
+define('JWT_SECRET', 'clave-generada-en-este-equipo');
+```
+
+Para volver a dejar el demo limpio después de una presentación:
+
+```powershell
+cd "C:\Users\aleks\Documents\SALCI-2"
+$sql = (Get-Content db\02_seed.sql -Raw) -replace 'USE SALCI;', 'USE prueba;'
+$tmp = Join-Path $env:TEMP 'seed_prueba.sql'
+$sql | Set-Content $tmp -Encoding utf8
+sqlcmd -S .\SQLEXPRESS01 -E -C -b -f 65001 -i $tmp
+```
+
+El seed reinicia los `IDENTITY`, así que los productos vuelven a quedar con
+IDs 1–8 en cada recarga. Si vienes de una versión anterior del proyecto,
+aplica antes las migraciones `05` a `09` (mismo reemplazo `USE SALCI;` →
+`USE prueba;`).
+
+### 3.1 Instalación nueva (otro equipo)
+
 ```bat
-cd "C:\Users\gerso\Documents\SALCI PHP"
+cd "C:\ruta\donde\clonaste\SALCI-2"
 
 sqlcmd -S .\SQLEXPRESS -E -C -i db\01_schema.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql
@@ -110,10 +154,11 @@ sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -I -i db\08_migracion_auditoria.sql
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\09_migracion_ajuste_origen.sql
 ```
 
-La migracion 08 agrega las columnas de auditoria de RF13 y se ejecuta con
-`-I` por la columna calculada persistida de `venta_detalle`. La 09 ajusta
-`ck_transacciones_origen` para que una reversa `AJUSTE` pueda conservar el
-`lote_id` (RF04) o el `venta_detalle_id` (RF15) sin perder la auditoría.
+La migración 08 agrega las columnas de auditoría de RF13; se ejecuta con
+`-I` para forzar `QUOTED_IDENTIFIER ON` en la sesión de `sqlcmd` (el propio
+script ya lo activa). La 09 ajusta `ck_transacciones_origen` para que una
+reversa `AJUSTE` pueda conservar el `lote_id` (RF04) o el
+`venta_detalle_id` (RF15) sin perder la auditoría.
 
 `02_seed.sql` **borra** los datos existentes y vuelve a cargar la demo.
 Es útil antes de una presentación; no ejecutar sobre datos reales.
@@ -122,12 +167,12 @@ Es útil antes de una presentación; no ejecutar sobre datos reales.
 > integrante ejecuta `01_schema.sql` y `02_seed.sql` en su propio SQL Server.
 > Guía completa para otro equipo: [`docs/como-ejecutar.md`](docs/como-ejecutar.md).
 
-### 3.1 Abrir el prototipo
+### 3.2 Abrir el prototipo
 
 Apache de XAMPP sirve la carpeta `app/` mediante una unión de directorios:
 
 ```
-C:\xampp\htdocs\salci  ->  C:\Users\gerso\Documents\SALCI PHP\app
+C:\xampp\htdocs\salci  ->  C:\Users\aleks\Documents\SALCI-2\app
 ```
 
 Con Apache iniciado, abrir:
@@ -138,6 +183,17 @@ http://localhost/salci/login.php
 
 - `admin` / `Salci2026!` → **Hola admin**
 - `cajero.chillan` / `Salci2026!` → **Hola trabajador**
+
+RNF implementados (detalle y comprobación en [`docs/rnf.md`](docs/rnf.md)):
+
+| ID | Qué cubre | Dónde se ve |
+|---|---|---|
+| RNF01 | < 500 ms medidos con `X-Response-Time-Ms` | cabecera HTTP en cada respuesta y panel |
+| RNF02 | FK/CHECK nativos + transacciones `op_tx()` | `db/10_verificacion_rnf.sql` |
+| RNF03 | SHA-256 con sal + JWT HS256 de 24 h | login y "Token RF05" del panel |
+| RNF04 | 99,9% + monitor público `GET /health` | `http://localhost/salci/health.php` |
+| RNF05 | Índices B-Tree en `sku`, `sucursal_id`, `username` | `db/10_verificacion_rnf.sql` |
+| RNF06 | Causa + acción en errores; responsive slate-blue | avisos y botón ◐/◑ |
 
 Desde el panel, **Abrir punto de venta** lleva a `pos.php`. El operador queda
 fijo a su sucursal; el administrador puede cambiar de sucursal en el POS.
@@ -150,18 +206,18 @@ críticas en rojo, alertas, las consultas 1:N y N:N, kardex y links de descarga.
 Si la unión no existe (por ejemplo, en otro equipo):
 
 ```bat
-mklink /J "C:\xampp\htdocs\salci" "C:\Users\gerso\Documents\SALCI PHP\app"
+mklink /J "C:\xampp\htdocs\salci" "C:\Users\aleks\Documents\SALCI-2\app"
 ```
 
 Alternativa sin Apache (servidor embebido de PHP):
 
 ```bat
-C:\xampp\php\php.exe -S 127.0.0.1:8080 -t "C:\Users\gerso\Documents\SALCI PHP\app"
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t "C:\Users\aleks\Documents\SALCI-2\app"
 ```
 
 y abrir `http://127.0.0.1:8080/login.php`.
 
-### 3.2 Diseño de la interfaz
+### 3.3 Diseño de la interfaz
 
 Tema oscuro con paneles de vidrio (*Glassmorphism*): fondo azul profundo,
 halos de color de baja intensidad, desenfoque `backdrop-filter`, bordes
@@ -169,6 +225,11 @@ translúcidos y acento turquesa. El contraste se mantiene alto para reducir
 la fatiga visual en jornadas largas.
 
 Las capturas para el informe están en `docs/capturas/`:
+
+- [`login.png`](docs/capturas/login.png) · [`panel-admin.png`](docs/capturas/panel-admin.png) · [`panel-trabajador.png`](docs/capturas/panel-trabajador.png)
+- [`pos.png`](docs/capturas/pos.png) · [`productos.png`](docs/capturas/productos.png) · [`ingresos.png`](docs/capturas/ingresos.png)
+- [`despachos.png`](docs/capturas/despachos.png) · [`transferencias.png`](docs/capturas/transferencias.png) · [`ventas.png`](docs/capturas/ventas.png)
+- [`usuarios.png`](docs/capturas/usuarios.png) · [`sucursales.png`](docs/capturas/sucursales.png) · [`reportes.png`](docs/capturas/reportes.png)
 
 ## 4. Usuarios de demostración
 
@@ -210,7 +271,9 @@ CONVERT(CHAR(64), HASHBYTES('SHA2_256',
 ## 5. Conexión desde PHP
 
 ```php
-$dsn = 'sqlsrv:Server=.\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1';
+// Este equipo (config.local.php):
+$dsn = 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1';
+// En una instalación nueva: sqlsrv:Server=.\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1
 $pdo = new PDO($dsn, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 ```
 
@@ -334,10 +397,20 @@ se revierte.
 
 ## 8. Respaldo
 
-`db/04_backup.sql` genera y verifica:
+`db/04_backup.sql` genera y verifica el respaldo en la carpeta que informa la
+propia instancia (`SERVERPROPERTY('InstanceDefaultBackupPath')`), sin ruta
+fija de `MSSQL17`. En este equipo se puede respaldar la base `prueba` con:
 
+```bat
+sqlcmd -S .\SQLEXPRESS01 -E -C -Q "BACKUP DATABASE prueba TO DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS01\MSSQL\Backup\prueba.bak' WITH INIT, CHECKSUM"
 ```
-C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak
+
+Para restaurarla:
+
+```bat
+sqlcmd -S .\SQLEXPRESS01 -E -C -Q "ALTER DATABASE prueba SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
+sqlcmd -S .\SQLEXPRESS01 -E -C -Q "RESTORE DATABASE prueba FROM DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS01\MSSQL\Backup\prueba.bak' WITH REPLACE, RECOVERY"
+sqlcmd -S .\SQLEXPRESS01 -E -C -Q "ALTER DATABASE prueba SET MULTI_USER"
 ```
 
 > SQL Server Express **no** soporta `BACKUP ... WITH COMPRESSION`.

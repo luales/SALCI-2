@@ -97,9 +97,21 @@ function indicadores_informe(PDO $pdo, int $sucursalId): array
         $pInventario
     )[0]['n'];
 
-    $productos = (int) $pdo->query(
-        'SELECT COUNT(*) FROM productos WHERE activo = 1'
-    )->fetchColumn();
+    if ($sucursalId > 0) {
+        [$fProductos, $pProductos] = filtro_informe($sucursalId, 'i.sucursal_id');
+        $productos = ejecutar_informe(
+            $pdo,
+            'SELECT COUNT(DISTINCT i.producto_id) AS n
+               FROM inventario i
+               JOIN productos p ON p.id = i.producto_id
+              WHERE p.activo = 1' . $fProductos,
+            $pProductos
+        )[0]['n'];
+    } else {
+        $productos = (int) $pdo->query(
+            'SELECT COUNT(*) FROM productos WHERE activo = 1'
+        )->fetchColumn();
+    }
 
     return [
         'productos'  => (int) $productos,
@@ -163,7 +175,7 @@ function csv_informe(PDO $pdo, string $tipo, int $sucursalId): array
                       FROM inventario i
                       JOIN productos p ON p.id = i.producto_id
                       JOIN sucursales s ON s.id = i.sucursal_id
-                     WHERE 1 = 1' . $filtro . '
+                     WHERE p.activo = 1' . $filtro . '
                      ORDER BY CASE WHEN i.stock <= p.stock_minimo THEN 0 ELSE 1 END,
                               s.nombre, p.sku';
             break;
@@ -191,7 +203,9 @@ function csv_informe(PDO $pdo, string $tipo, int $sucursalId): array
             break;
 
         case 'proveedores':
-            /* Relación 1:N: proveedor -> lotes (informe tabla 2 de la pauta). */
+            /* Relación 1:N: proveedor -> lotes (informe tabla 2 de la pauta).
+               RF11: el filtro de sucursal también aplica a este informe y su CSV. */
+            [$filtro, $params] = filtro_informe($sucursalId, 'l.sucursal_id');
             $sql = 'SELECT pr.id,
                            pr.rut,
                            pr.nombre AS proveedor,
@@ -202,10 +216,10 @@ function csv_informe(PDO $pdo, string $tipo, int $sucursalId): array
                            MIN(l.fecha_ingreso) AS primera_entrega,
                            MAX(l.fecha_ingreso) AS ultima_entrega
                       FROM proveedores pr
-                      LEFT JOIN lotes l ON l.proveedor_id = pr.id AND l.anulado = 0
+                      LEFT JOIN lotes l ON l.proveedor_id = pr.id AND l.anulado = 0'
+                      . $filtro . '
                      GROUP BY pr.id, pr.rut, pr.nombre, pr.telefono, pr.email
                      ORDER BY unidades_ingresadas DESC';
-            $params = [];
             break;
 
         case 'alertas':

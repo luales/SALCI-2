@@ -1,0 +1,50 @@
+%% Figura 2 — BPMN 2.0 del Proceso Logístico y Alertas en SALCI
+%% Carriles: Operador de Sucursal, Sistema Central SALCI, Base de datos y
+%% Sistema de Alertas. Fuente editable en Mermaid (https://mermaid.live).
+flowchart TD
+    subgraph L1["Operador de Sucursal"]
+        A([Inicio: solicitud del cliente]) --> B[Ingresar SKU y cantidad en el POS]
+        Z[Avisar al cliente / Venta cancelada por stock]:::fin
+        W([Fin: venta concretada]):::fin
+    end
+
+    subgraph L2["Sistema Central SALCI"]
+        C{¿Datos válidos?}
+        D{¿Stock disponible?}
+        M[Abrir transacción SQL]
+        N[Descontar inventario]
+        O[Insertar venta_detalle y asiento SALIDA]
+        P{¿Saldo resultante crítico?}
+        Q[COMMIT: consolidar cambios]
+    end
+
+    subgraph L3["Base de datos SQL Server"]
+        R[(Consultar stock con UPDLOCK)]
+        S[(Registrar bitácora / auditoría)]
+    end
+
+    subgraph L4["Sistema de Alertas"]
+        T[Registrar alerta en registro_alertas]
+        U[Enviar correo electrónico]
+        V[Enviar webhook JSON]
+    end
+
+    B --> C
+    C -- No --> B
+    C -- Sí --> R
+    R --> D
+    D -- No --> Z
+    D -- Sí --> M
+    M --> N
+    N --> O
+    O --> S
+    S --> P
+    P -- Sí --> T
+    T --> Q
+    P -- No --> Q
+    Q --> U
+    Q --> V
+    U --> W
+    V --> W
+
+    classDef fin fill:#0b1220,stroke:#93c5fd,color:#e2e8f0;

@@ -3,10 +3,23 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/operaciones.php';
 require_once __DIR__ . '/partials.php';
+require_once __DIR__ . '/reportes_lib.php';
 
 $user = auth_require();
 $pdo  = db();
 $esAdmin = op_admin($user);
+
+/* RF11: el operador sólo ve movimientos de su sucursal; ADMIN elige sede. */
+$perfil = informes_contexto($user, $pdo);
+$sucId  = (int) $perfil['sucursal_id'];
+$fSuc1 = $fSuc2 = '';
+$pSuc  = [];
+if ($sucId > 0) {
+    /* Dos marcadores distintos: PDO_SQLSRV no permite repetir :suc. */
+    $fSuc1 = ' AND l.sucursal_id = :s1';
+    $fSuc2 = ' AND l.sucursal_id = :s2';
+    $pSuc  = [':s1' => $sucId, ':s2' => $sucId];
+}
 
 $editar = (int) ($_GET['editar'] ?? 0);
 $proveedor = null;
@@ -16,21 +29,24 @@ if ($editar > 0) {
     $proveedor = $st->fetch();
 }
 
-$proveedores = $pdo->query(
+$stProv = $pdo->prepare(
     'SELECT pr.*,
             (SELECT COUNT(*) FROM lotes l
-              WHERE l.proveedor_id = pr.id AND l.anulado = 0) AS lotes,
+              WHERE l.proveedor_id = pr.id AND l.anulado = 0' . $fSuc1 . ') AS lotes,
             ISNULL((SELECT SUM(l.cantidad) FROM lotes l
-                     WHERE l.proveedor_id = pr.id AND l.anulado = 0), 0) AS unidades
+                     WHERE l.proveedor_id = pr.id AND l.anulado = 0' . $fSuc2 . '), 0) AS unidades
        FROM proveedores pr
       ORDER BY pr.activo DESC, pr.nombre'
-)->fetchAll();
+);
+$stProv->execute($pSuc);
+$proveedores = $stProv->fetchAll();
 
 $v = static fn(string $k): string => (string) ($proveedor[$k] ?? '');
 ?>
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="assets/tema.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">

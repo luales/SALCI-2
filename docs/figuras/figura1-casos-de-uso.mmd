@@ -1,0 +1,35 @@
+%% Figura 1 — Diagrama General de Casos de Uso del Sistema SALCI
+%% Fuente editable en Mermaid. Se puede exportar a PNG/SVG desde
+%% https://mermaid.live o con: mmdc -i figura1-casos-de-uso.mmd -o figura1.png
+usecaseDiagram
+    actor Administrador as Admin
+    actor "Trabajador / Operador" as Operador
+    actor "Sistema Automatizado" as Sistema
+
+    Admin --> (Autenticarse)
+    Operador --> (Autenticarse)
+
+    Admin --> (Administrar usuarios)
+    Admin --> (Administrar sucursales)
+    Admin --> (Gestionar productos)
+    Admin --> (Ver dashboard ejecutivo)
+    Admin --> (Exportar reportes CSV)
+
+    Operador --> (Registrar ingresos con lotes)
+    Operador --> (Procesar venta / salida POS)
+    Operador --> (Gestionar despachos)
+    Operador --> (Transferir stock entre sucursales)
+    Operador --> (Consultar stock en vivo)
+    Operador --> (Ver dashboard ejecutivo)
+
+    Sistema --> (Evaluar stock crítico)
+    Sistema --> (Enviar alertas logísticas)
+    Sistema --> (Registrar auditoría inmutable)
+
+    (Autenticarse) ..> (Registrar auditoría inmutable) : <<include>>
+    (Procesar venta / salida POS) ..> (Registrar auditoría inmutable) : <<include>>
+    (Registrar ingresos con lotes) ..> (Registrar auditoría inmutable) : <<include>>
+    (Transferir stock entre sucursales) ..> (Registrar auditoría inmutable) : <<include>>
+    (Procesar venta / salida POS) ..> (Evaluar stock crítico) : <<extend>>
+    (Registrar ingresos con lotes) ..> (Evaluar stock crítico) : <<extend>>
+    (Evaluar stock crítico) ..> (Enviar alertas logísticas) : <<extend>>

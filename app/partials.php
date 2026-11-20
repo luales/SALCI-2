@@ -37,6 +37,7 @@ function render_barra(array $user, string $activo = ''): void
                 <?= $enlace('productos.php', 'Productos', 'productos') ?>
                 <?= $enlace('ingresos.php', 'Ingresos', 'ingresos') ?>
                 <?= $enlace('proveedores.php', 'Proveedores', 'proveedores') ?>
+                <?= $enlace('compradores.php', 'Compradores', 'compradores') ?>
                 <?= $enlace('despachos.php', 'Despachos', 'despachos') ?>
                 <?= $enlace('transferencias.php', 'Transferencias', 'transferencias') ?>
                 <?php if (($user['rol'] ?? '') === 'ADMIN'): ?>
@@ -47,6 +48,8 @@ function render_barra(array $user, string $activo = ''): void
             </nav>
         </div>
         <div class="barra-der">
+            <button type="button" class="tema-toggle" data-tema-toggle
+                    aria-pressed="false" aria-label="Cambiar tema">◐</button>
             <span class="chip"><?= e((string) $user['rol']) ?></span>
             <span><?= e((string) $user['username']) ?></span>
             <a class="salir" href="logout.php">Cerrar sesión</a>
@@ -67,5 +70,13 @@ function render_flash_op(): void
         return;
     }
 
-    echo '<div class="flash ' . e($flash['tipo']) . '">' . e($flash['msg']) . '</div>';
+    $msg = (string) $flash['msg'];
+
+    /* RNF06: incluso los errores ya controlados indican causa y acción. */
+    if ($flash['tipo'] === 'error' && stripos($msg, 'acción') === false) {
+        $msg .= ' — Acción correctiva: revisa los datos e inténtalo de nuevo; '
+            . 'si persiste, informa al administrador.';
+    }
+
+    echo '<div class="flash ' . e($flash['tipo']) . '">' . e($msg) . '</div>';
 }

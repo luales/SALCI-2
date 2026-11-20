@@ -1,0 +1,135 @@
+%% Figura 3 — Modelo Entidad-Relación corregido de SALCI (3FN)
+%% Equivalente legible de db/diagrama.dbml. Exportable desde https://mermaid.live
+erDiagram
+    SUCURSALES  ||--o{ USUARIOS              : "sucursal_id"
+    SUCURSALES  ||--o{ PRODUCTOS             : "productos del catálogo"
+    SUCURSALES  ||--o{ INVENTARIO            : "stock local"
+    SUCURSALES  ||--o{ LOTES                 : "ingresos recibidos"
+    SUCURSALES  ||--o{ VENTAS                : "ventas de la sede"
+    SUCURSALES  ||--o{ DESPACHOS_PENDIENTES  : "despachos de la sede"
+    SUCURSALES  ||--o{ REGISTRO_ALERTAS      : "alertas de la sede"
+    SUCURSALES  ||--o{ TRANSACCIONES         : "kardex de la sede"
+
+    PRODUCTOS   ||--o{ INVENTARIO            : "producto_id"
+    PRODUCTOS   ||--o{ LOTES                 : "producto_id"
+    PRODUCTOS   ||--o{ VENTA_DETALLE         : "producto_id"
+    PRODUCTOS   ||--o{ TRANSACCIONES         : "producto_id"
+    PRODUCTOS   ||--o{ REGISTRO_ALERTAS      : "producto_id"
+    PRODUCTOS   ||--o{ DESPACHOS_PENDIENTES  : "producto_id"
+
+    PROVEEDORES ||--o{ LOTES                 : "proveedor_id"
+    COMPRADORES ||--o{ VENTAS                : "comprador_id"
+    COMPRADORES ||--o{ DESPACHOS_PENDIENTES  : "comprador_id"
+
+    USUARIOS    ||--o{ VENTAS                : "usuario_id"
+    USUARIOS    ||--o{ TRANSACCIONES         : "usuario_id"
+    VENTAS      ||--|{ VENTA_DETALLE         : "venta_id"
+    VENTAS      ||--o{ TRANSACCIONES         : "venta_id"
+    VENTAS      ||--o{ DESPACHOS_PENDIENTES  : "venta_id"
+    LOTES       ||--o{ TRANSACCIONES         : "lote_id"
+    VENTA_DETALLE ||--o{ TRANSACCIONES       : "venta_detalle_id"
+
+    SUCURSALES {
+        int id PK
+        string nombre
+        string direccion
+        bit activa
+        datetime created_at
+    }
+    USUARIOS {
+        int id PK
+        int sucursal_id FK
+        string username UK
+        string password_hash
+        string salt
+        string rol
+        bit activo
+    }
+    PRODUCTOS {
+        int id PK
+        string sku UK
+        string nombre
+        decimal precio
+        int stock_minimo
+        bit activo
+    }
+    INVENTARIO {
+        int producto_id PK,FK
+        int sucursal_id PK,FK
+        int stock
+    }
+    PROVEEDORES {
+        int id PK
+        string rut UK
+        string nombre
+        string telefono
+        string email
+        bit activo
+    }
+    COMPRADORES {
+        int id PK
+        string rut UK
+        string nombre
+        string telefono
+        string email
+        string direccion
+    }
+    LOTES {
+        int id PK
+        int producto_id FK
+        int sucursal_id FK
+        int proveedor_id FK
+        string numero_lote
+        datetime fecha_ingreso
+        int cantidad
+        bit anulado
+    }
+    VENTAS {
+        int id PK
+        int sucursal_id FK
+        int comprador_id FK
+        int usuario_id FK
+        datetime fecha
+        decimal total
+        string estado
+    }
+    VENTA_DETALLE {
+        int id PK
+        int venta_id FK
+        int producto_id FK
+        int cantidad
+        decimal precio_unitario
+        decimal subtotal
+    }
+    TRANSACCIONES {
+        int id PK
+        int producto_id FK
+        int sucursal_id FK
+        int usuario_id FK
+        int lote_id FK
+        int venta_detalle_id FK
+        string tipo
+        int cantidad
+        int stock_resultante
+        datetime fecha
+        uniqueidentifier grupo_id
+    }
+    DESPACHOS_PENDIENTES {
+        int id PK
+        int sucursal_id FK
+        int comprador_id FK
+        int venta_id FK
+        int producto_id FK
+        int cantidad
+        string estado
+        datetime fecha_entrega
+    }
+    REGISTRO_ALERTAS {
+        int id PK
+        int producto_id FK
+        int sucursal_id FK
+        datetime fecha
+        string mensaje
+        int stock_al_momento
+        bit leida
+    }

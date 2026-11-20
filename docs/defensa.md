@@ -1,8 +1,11 @@
 # Guion de presentación y defensa oral
 
 Duración sugerida: 8–10 minutos de demostración + 5 minutos de preguntas.
-Todo se ejecuta sobre SQL Server local `.\SQLEXPRESS` y XAMPP. Si se pide
-reiniciar: `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql`.
+Todo se ejecuta sobre XAMPP y, en este equipo, SQL Server `.\SQLEXPRESS01` con
+la base **`prueba`** (la instancia `.\SQLEXPRESS` está detenida). Si se pide
+reiniciar el demo, seguir el comando de la sección 0 de `docs/como-ejecutar.md`,
+que ajusta el `USE SALCI;` del seed a `USE prueba;`. En una instalación nueva
+con base `SALCI`, el comando es `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql`.
 
 ---
 
@@ -60,6 +63,9 @@ Abrir `db/03_queries.sql` y ejecutarlo con:
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\03_queries.sql
 ```
 
+En este equipo (base `prueba`), reemplazar el `USE SALCI;` por
+`USE prueba;` en una copia temporal del archivo antes de ejecutarlo.
+
 | Pauta | Consulta | Qué demuestra |
 |---|---|---|
 | 1 | Validación de login | Compara `password_hash` contra `SHA-256(salt || password)` solo si `activo = 1`. |
@@ -109,9 +115,45 @@ y luego `RESTORE VERIFYONLY`. SQL Server Express no admite `COMPRESSION`.
 
 ---
 
+## 5b. Requerimientos no funcionales (1 min)
+
+Guion completo y comprobaciones en [`rnf.md`](rnf.md). Puntos clave para decir
+en voz alta:
+
+- **RNF01:** cada respuesta lleva `X-Response-Time-Ms`, calculado desde el
+  primer `include`. El objetivo es < 500 ms en el 99%; lo que pase de 500 ms se
+  registra en el log para medir el porcentaje real. En el panel se muestra el
+  valor de esa petición.
+- **RNF02:** el informe pide `PRAGMA foreign_keys=ON`, que es de SQLite; en SQL
+  Server las FK son nativas. Verificamos `sys.foreign_keys` y `sys.check_constraints`
+  con `db/10_verificacion_rnf.sql` y todas las escrituras multi-tabla pasan por
+  `op_tx()`.
+- **RNF03:** contraseña `SHA-256(salt || password)` con 16 bytes de sal,
+  comparada con `hash_equals`, y JWT HS256 de 24 h cuya firma y algoritmo se
+  validan en cada pantalla.
+- **RNF04:** `GET /health` es público, devuelve JSON con estado de PHP y de SQL
+  Server y usa 503 si la base cae; es el soporte del objetivo 99,9%.
+- **RNF05:** los índices B-Tree ya están en el schema (`uq_productos_sku`,
+  `uq_usuarios_username`, `ix_inventario_sucursal`, ...). El script de verificación
+  imprime la evidencia; no duplicamos índices innecesariamente.
+- **RNF06:** los errores siempre muestran **Causa** y **Acción correctiva**
+  (manejadores globales + avisos de los formularios), y la interfaz es
+  responsive con modo oscuro slate-blue y conmutador persistente.
+
+Demostración rápida: `curl -I http://localhost/salci/login.php`, abrir
+`health.php`, ejecutar `db/10_verificacion_rnf.sql` y pulsar el botón ◐/◑.
+
+---
+
 ## 6. Evidencias incluidas
 
 `docs/capturas/`: `login.png`, `panel-admin.png`, `panel-trabajador.png`,
 `pos.png`, `productos.png`, `ingresos.png`, `despachos.png`,
 `transferencias.png`, `usuarios.png`, `sucursales.png`, `ventas.png`,
 `reportes.png`.
+
+`docs/figuras/`: fuentes editables de la **Figura 1** (casos de uso),
+**Figura 2** (BPMN 2.0) y **Figura 3** (MER), en Mermaid. Se exportan a
+PNG/SVG desde <https://mermaid.live> o con
+`mmdc -i figura3-mer.mmd -o figura3-mer.png`. El MER también está como
+DBML en `db/diagrama.dbml` (dbdiagram.io).

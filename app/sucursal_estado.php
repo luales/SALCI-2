@@ -34,14 +34,18 @@ try {
             $usuarios = (int) $pdo->query(
                 'SELECT COUNT(*) FROM usuarios WHERE sucursal_id = ' . $id
             )->fetchColumn();
-            $stock = (int) $pdo->query(
-                'SELECT ISNULL(SUM(stock), 0) FROM inventario WHERE sucursal_id = ' . $id
-            )->fetchColumn();
-            $movimientos = (int) $pdo->query(
-                'SELECT COUNT(*) FROM transacciones WHERE sucursal_id = ' . $id
-            )->fetchColumn();
+            /* RF07: cualquier fila dependiente impide el DELETE, aunque el
+               stock sea 0. Así el mensaje es claro y no depende de la FK. */
+            $dependientes = 0;
+            foreach (['inventario', 'lotes', 'ventas', 'despachos_pendientes',
+                      'registro_alertas', 'transacciones'] as $tabla) {
+                $dependientes += (int) $pdo->query(
+                    'SELECT COUNT(*) FROM ' . $tabla . ' WHERE sucursal_id = ' . $id
+                )->fetchColumn();
+            }
+            $movimientos = $dependientes;
 
-            if ($usuarios > 0 || $stock > 0 || $movimientos > 0) {
+            if ($usuarios > 0 || $movimientos > 0) {
                 throw new RuntimeException(
                     'No se puede eliminar: la sucursal tiene usuarios, existencias o movimientos (RF07).'
                 );

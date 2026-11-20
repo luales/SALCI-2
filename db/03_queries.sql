@@ -1,4 +1,4 @@
-﻿/* =====================================================================
+/* =====================================================================
    PROYECTO SALCI - Script 03: Consultas SQL
    ---------------------------------------------------------------------
    Contiene las 4 consultas exigidas por la pauta de la Evaluacion 4
@@ -9,7 +9,7 @@
      [PAUTA 3]  Informe tabla 2 (relacion 1:N)
      [PAUTA 4]  Informe de transacciones (relacion N:N)
 
-   Ejecutar:  sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\03_queries.sql
+   Ejecutar:  sqlcmd -S .\SQLEXPRESS01 -E -C -f 65001 -i db\03_queries.sql
    ===================================================================== */
 
 USE SALCI;
@@ -243,8 +243,8 @@ GROUP BY grupo_id;
    SQL Server no escribe archivos desde un SELECT. Se exporta con
    sqlcmd indicando separador y UTF-8:
 
-   sqlcmd -S .\SQLEXPRESS -E -C -d SALCI -W -s "," -f 65001 ^
+    sqlcmd -S .\SQLEXPRESS01 -E -C -d prueba -W -s ";" -f 65001 ^
           -Q "SELECT * FROM vw_stock_en_vivo" -o stock.csv
 
-   En PHP el CSV se genera con fopen('php://output') y BOM UTF-8.
-   ===================================================================== */
+    En PHP el CSV se genera con fopen('php://output') y BOM UTF-8, usando
+    el MISMO separador ';' que esta consulta de apoyo (RF14).

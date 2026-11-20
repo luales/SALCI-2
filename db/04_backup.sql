@@ -10,8 +10,13 @@
 USE master;
 GO
 
+/* La ruta se deriva de la instancia para no depender del nombre MSSQL17. */
 DECLARE @ruta NVARCHAR(400) =
-    N'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak';
+    CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(400)) + N'SALCI.bak';
+
+/* En este equipo (SQLEXPRESS01) la base de trabajo se llama "prueba".
+   Para respaldarla sin cambiar este script, usar el comando del README
+   sección 8, o reemplazar SALCI por prueba en las dos sentencias de abajo. */
 
 PRINT 'Respaldando en: ' + @ruta;
 
@@ -46,7 +51,7 @@ GO
    GO
 
    RESTORE DATABASE SALCI
-   FROM DISK = N'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak'
+   FROM DISK = @ruta
    WITH REPLACE, RECOVERY, STATS = 10;
    GO
 

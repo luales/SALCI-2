@@ -41,6 +41,7 @@ function e(string $s): string
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="assets/tema.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
@@ -49,6 +50,8 @@ function e(string $s): string
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body class="centrado">
+    <button type="button" class="tema-toggle tema-flotante" data-tema-toggle
+            aria-pressed="false" aria-label="Cambiar tema">◐</button>
     <div class="acceso">
     <main class="tarjeta">
         <header class="marca">

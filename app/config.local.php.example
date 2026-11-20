@@ -19,6 +19,11 @@ declare(strict_types=1);
 /* Mostrar errores detallados (útil en desarrollo, no en producción) */
 // define('APP_DEBUG', true);
 
+/* RF05: la clave de ejemplo de config.php NO es segura.
+   Generar una con:  php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+   y pegarla aquí antes de la defensa o de subir el proyecto. */
+// define('JWT_SECRET', 'peg-aqui-la-clave-de-64-caracteres');
+
 /* RF02: correo de alertas vía Resend.
    Usar una API key con permiso sending_access (NUNCA full_access).
    El remitente onboarding@resend.dev solo sirve para pruebas y el
@@ -29,3 +34,8 @@ declare(strict_types=1);
 
 /* RF02: segundo canal (JSON POST). webhook.site sirve para la demo. */
 // define('RF02_WEBHOOK_URL', 'https://webhook.site/xxxx');
+
+/* RF02 en este equipo (Sin SMTP/API key): el correo queda en
+   app/logs/rf02_correo.log y el webhook se recibe localmente. */
+// define('RF02_EMAIL_DESTINO', 'alertas@salci.local');
+// define('RF02_WEBHOOK_URL', 'http://localhost/salci/rf02_webhook_local.php');

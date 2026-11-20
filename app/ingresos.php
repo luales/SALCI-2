@@ -58,6 +58,7 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="assets/tema.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
@@ -135,9 +136,9 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
                 <input id="numero_lote" name="numero_lote" type="text" maxlength="50"
                        value="<?= e($v('numero_lote')) ?>">
 
-                <label for="fecha_ingreso">Fecha de recepción</label>
+                <label for="fecha_ingreso">Fecha de recepción (opcional; si se omite se usa hoy)</label>
                 <input id="fecha_ingreso" name="fecha_ingreso" type="date"
-                       value="<?= e(substr($v('fecha_ingreso') ?: $hoy, 0, 10)) ?>" required>
+                       value="<?= e(substr($v('fecha_ingreso') ?: $hoy, 0, 10)) ?>">
 
                 <p class="acciones">
                     <button class="boton" type="submit">Guardar ingreso</button>

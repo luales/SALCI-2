@@ -4,6 +4,13 @@ RF02 pide **dos canales**: correo electrónico y webhook cuando
 `stock <= stock_minimo`. La implementación hace ambos después del `COMMIT`,
 por lo que un fallo de red **no revierte** el movimiento de stock.
 
+Cada transacción que deja el saldo en o bajo el mínimo genera su alerta: no se
+suprime por una alerta anterior sin leer. En este equipo no hay SMTP ni API key
+de Resend, así que el correo queda en `app/logs/rf02_correo.log` y el webhook se
+recibe en `app/rf02_webhook_local.php` y queda en `app/logs/rf02_webhook.log`.
+Con una API key real, el correo se envía por Resend y el webhook puede apuntar
+a cualquier URL externa.
+
 ---
 
 ## 1. Qué key usar en Resend

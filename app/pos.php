@@ -353,34 +353,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mov->bindValue(':upy', $aud['by']);
                 $mov->execute();
 
-                /* RF02: alerta si el saldo queda en o bajo el mínimo,
-                   sin duplicar una alerta no leída del mismo producto/sucursal. */
+                /* RF02: alerta si el saldo post-venta queda en o bajo el mínimo.
+                   Cada evento crítico genera su alerta; no se suprime por una
+                   alerta anterior sin leer. */
                 if ($nuevoStock <= $it['stock_minimo']) {
-                    $ex = $pdo->prepare(
-                        'SELECT 1 FROM registro_alertas
-                          WHERE producto_id = :producto
-                            AND sucursal_id = :suc
-                            AND leida = 0'
+                    $al = $pdo->prepare(
+                        'INSERT INTO registro_alertas
+                            (producto_id, sucursal_id, mensaje, stock_al_momento, created_by)
+                         VALUES (:producto, :suc, :mensaje, :stock, :by)'
                     );
-                    $ex->execute([':producto' => $it['producto_id'], ':suc' => $sucursalId]);
-
-                    if ($ex->fetchColumn() === false) {
-                        $al = $pdo->prepare(
-                            'INSERT INTO registro_alertas
-                                (producto_id, sucursal_id, mensaje, stock_al_momento, created_by)
-                             VALUES (:producto, :suc, :mensaje, :stock, :by)'
-                        );
-                        $al->bindValue(':producto', $it['producto_id'], PDO::PARAM_INT);
-                        $al->bindValue(':suc', $sucursalId, PDO::PARAM_INT);
-                        $al->bindValue(
-                            ':mensaje',
-                            'Stock critico: ' . $nuevoStock . ' unidades (minimo '
-                            . $it['stock_minimo'] . ')'
-                        );
-                        $al->bindValue(':stock', $nuevoStock, PDO::PARAM_INT);
-                        $al->bindValue(':by', 'SISTEMA');
-                        $al->execute();
-                    }
+                    $al->bindValue(':producto', $it['producto_id'], PDO::PARAM_INT);
+                    $al->bindValue(':suc', $sucursalId, PDO::PARAM_INT);
+                    $al->bindValue(
+                        ':mensaje',
+                        'Stock critico: ' . $nuevoStock . ' unidades (minimo '
+                        . $it['stock_minimo'] . ')'
+                    );
+                    $al->bindValue(':stock', $nuevoStock, PDO::PARAM_INT);
+                    $al->bindValue(':by', 'SISTEMA');
+                    $al->execute();
                 }
             }
 
@@ -517,6 +508,7 @@ $compradorNombre = $compradorActual !== null
 <!doctype html>
 <html lang="es">
 <head>
+    <script src="assets/tema.js"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">

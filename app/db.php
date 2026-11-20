@@ -23,9 +23,10 @@ function db(): PDO
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
     } catch (PDOException $e) {
-        http_response_code(500);
-        $detalle = APP_DEBUG ? ' (' . $e->getMessage() . ')' : '';
-        exit('No se pudo conectar a SQL Server' . htmlspecialchars($detalle));
+        /* RNF04/RNF06: no se termina aquí. Quien llama decide: health.php
+           devuelve 503 en JSON y las páginas son atendidas por el manejador
+           global, que muestra causa + acción correctiva con HTTP 500. */
+        throw $e;
     }
 
     return $pdo;

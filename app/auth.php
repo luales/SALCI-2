@@ -146,8 +146,17 @@ function auth_jwt_validar(?string $token): ?array
         return null;
     }
 
+    /* RNF03: se exige HS256 (evita confusiones de algoritmo) antes de decodificar. */
+    $cabecera = json_decode(auth_b64url_decode($partes[0]), true);
+    if (!is_array($cabecera) || ($cabecera['alg'] ?? '') !== 'HS256') {
+        return null;
+    }
+
     $payload = json_decode(auth_b64url_decode($partes[1]), true);
     if (!is_array($payload) || (int) ($payload['exp'] ?? 0) <= time()) {
+        return null;
+    }
+    if ((int) ($payload['iat'] ?? 0) > time() + 60) {
         return null;
     }
 

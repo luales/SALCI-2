@@ -1,18 +1,18 @@
 /* =====================================================================
-   SALCI — Tema oscuro Glassmorphism
+   SALCI — Tema oscuro slate-blue (RNF06)
    ---------------------------------------------------------------------
-   - Fondo profundo con halos de color muy bajos para no cansar la vista.
+   - Paleta slate/azul: fondo profundo #0b1220 y acento #93c5fd.
    - Paneles translúcidos con desenfoque (backdrop-filter) y borde claro.
-   - Acento turquesa/cian con texto oscuro para mantener el contraste.
-   - Respeta prefers-reduced-motion.
+   - Conmutador de tema persistente en assets/tema.js (◐ / ◑).
+   - Respeta prefers-reduced-motion y el modo impresión.
    ===================================================================== */
 
 :root {
     color-scheme: dark;
 
-    --bg-0: #050a12;
-    --bg-1: #08111d;
-    --bg-2: #060d17;
+    --bg-0: #0b1220;
+    --bg-1: #111c31;
+    --bg-2: #0a1424;
 
     --glass:        rgba(255, 255, 255, .055);
     --glass-fuerte: rgba(255, 255, 255, .085);
@@ -20,19 +20,47 @@
     --stroke-suave: rgba(255, 255, 255, .07);
 
     --texto:  #e8eef8;
-    --suave:  #93a5be;
-    --tenue:  #6f8199;
+    --suave:  #a9b8d0;
+    --tenue:  #7c8ca8;
 
-    --acento:     #5eead4;
-    --acento-2:   #38bdf8;
-    --acento-tinta: #04121a;
+    --acento:     #93c5fd;
+    --acento-2:   #60a5fa;
+    --acento-tinta: #071426;
 
     --peligro:      #fca5a5;
     --peligro-fondo: rgba(248, 113, 113, .10);
     --peligro-borde: rgba(248, 113, 113, .28);
 
     --radio: 18px;
-    --sombra: 0 24px 60px rgba(0, 0, 0, .55);
+    --sombra: 0 24px 60px rgba(2, 6, 23, .65);
+}
+
+/* Tema claro opcional: mismo layout, misma paleta slate-blue. */
+:root[data-tema="claro"] {
+    color-scheme: light;
+
+    --bg-0: #f1f5f9;
+    --bg-1: #e2e8f0;
+    --bg-2: #f8fafc;
+
+    --glass:        rgba(255, 255, 255, .78);
+    --glass-fuerte: rgba(255, 255, 255, .92);
+    --stroke:       rgba(15, 23, 42, .14);
+    --stroke-suave: rgba(15, 23, 42, .09);
+
+    --texto:  #0f172a;
+    --suave:  #475569;
+    --tenue:  #64748b;
+
+    --acento:     #1d4ed8;
+    --acento-2:   #2563eb;
+    --acento-tinta: #ffffff;
+
+    --peligro:      #b91c1c;
+    --peligro-fondo: rgba(220, 38, 38, .08);
+    --peligro-borde: rgba(220, 38, 38, .25);
+
+    --sombra: 0 18px 40px rgba(15, 23, 42, .12);
 }
 
 * {
@@ -50,9 +78,9 @@ body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     color: var(--texto);
     background:
-        radial-gradient(1100px 700px at 10% -12%, rgba(45, 212, 191, .15), transparent 60%),
-        radial-gradient(950px 620px at 92% -6%, rgba(96, 165, 250, .14), transparent 58%),
-        radial-gradient(900px 900px at 50% 115%, rgba(167, 139, 250, .10), transparent 62%),
+        radial-gradient(1100px 700px at 10% -12%, rgba(96, 165, 250, .16), transparent 60%),
+        radial-gradient(950px 620px at 92% -6%, rgba(59, 130, 246, .14), transparent 58%),
+        radial-gradient(900px 900px at 50% 115%, rgba(148, 163, 184, .10), transparent 62%),
         linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 48%, var(--bg-2) 100%);
     background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
@@ -76,7 +104,7 @@ body::before {
     height: 520px;
     top: -190px;
     left: -140px;
-    background: radial-gradient(circle, rgba(45, 212, 191, .38), transparent 70%);
+    background: radial-gradient(circle, rgba(96, 165, 250, .34), transparent 70%);
     animation: flotar 24s ease-in-out infinite;
 }
 
@@ -85,7 +113,7 @@ body::after {
     height: 580px;
     right: -190px;
     bottom: -240px;
-    background: radial-gradient(circle, rgba(96, 165, 250, .32), transparent 70%);
+    background: radial-gradient(circle, rgba(147, 197, 253, .26), transparent 70%);
     animation: flotar 30s ease-in-out infinite reverse;
 }
 
@@ -415,6 +443,102 @@ button:active {
     background: rgba(94, 234, 212, .12);
     border-color: rgba(94, 234, 212, .35);
     color: var(--acento);
+}
+
+/* ---------- RNF06: conmutador de tema ---------- */
+
+.tema-toggle {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 38px;
+    height: 34px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .05);
+    color: var(--acento);
+    font-size: 1rem;
+    line-height: 1;
+    box-shadow: none;
+}
+
+.tema-toggle:hover {
+    background: rgba(96, 165, 250, .14);
+    border-color: rgba(147, 197, 253, .40);
+    filter: none;
+    transform: none;
+}
+
+.tema-flotante {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 30;
+    width: 42px;
+    height: 40px;
+    background: var(--glass-fuerte);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+:root[data-tema="claro"] .barra {
+    background: rgba(241, 245, 249, .82);
+}
+
+:root[data-tema="claro"] input,
+:root[data-tema="claro"] select {
+    background: rgba(15, 23, 42, .04);
+}
+
+:root[data-tema="claro"] .menu-link:hover,
+:root[data-tema="claro"] .tabla-scroll {
+    background: rgba(15, 23, 42, .04);
+}
+
+:root[data-tema="claro"] .tabla tr.critico td {
+    background: rgba(220, 38, 38, .05);
+}
+
+:root[data-tema="claro"] code {
+    color: #1e3a8a;
+}
+
+/* ---------- RNF06: pantalla de error amigable ---------- */
+
+.error-pagina {
+    max-width: 520px;
+}
+
+.error-pagina h2::after {
+    content: none;
+}
+
+.error-bloque {
+    margin: 14px 0;
+    padding: 12px 14px;
+    border: 1px solid var(--stroke-suave);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, .04);
+    font-size: .88rem;
+    line-height: 1.6;
+    color: var(--suave);
+}
+
+.error-bloque strong {
+    color: var(--acento);
+}
+
+.error-detalle {
+    max-height: 180px;
+    overflow: auto;
+    padding: 10px;
+    border-radius: 9px;
+    background: rgba(2, 6, 23, .45);
+    color: var(--tenue);
+    font-size: .72rem;
+    white-space: pre-wrap;
 }
 
 /* ---------- Contenido del panel ---------- */

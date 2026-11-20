@@ -42,3 +42,38 @@ defined('RF02_RESEND_FROM')    || define('RF02_RESEND_FROM', 'SALCI <onboarding@
 
 /* RF05: clave para firmar el JWT HS256 (24 h). Sobreescribir en producción. */
 defined('JWT_SECRET') || define('JWT_SECRET', 'SALCI-CAMBIAR-EN-PRODUCCION-2026');
+
+/* ---------------------------------------------------------------------
+   RNF01 — Eficiencia: tiempo de respuesta.
+   Se mide desde el primer include de cualquier petición y se publica en la
+   cabecera X-Response-Time-Ms (exigida por el informe). Además se registra
+   en el log cualquier respuesta por encima del objetivo de 500 ms.
+   --------------------------------------------------------------------- */
+$GLOBALS['salci_t0'] = microtime(true);
+
+if (function_exists('header_register_callback')) {
+    header_register_callback(static function (): void {
+        if (headers_sent()) {
+            return;
+        }
+        $ms = (microtime(true) - ($GLOBALS['salci_t0'] ?? microtime(true))) * 1000;
+        header('X-Response-Time-Ms: ' . number_format($ms, 2, '.', ''));
+    });
+}
+
+register_shutdown_function(static function (): void {
+    $ms = (microtime(true) - ($GLOBALS['salci_t0'] ?? microtime(true))) * 1000;
+    if ($ms > 500) {
+        $uri = (string) ($_SERVER['REQUEST_URI'] ?? 'cli');
+        error_log(sprintf('SALCI RNF01: respuesta lenta %.2f ms en %s', $ms, $uri));
+    }
+});
+
+/** Tiempo transcurrido hasta este momento (para mostrarlo en el panel). */
+function salci_response_ms(): float
+{
+    return (microtime(true) - ($GLOBALS['salci_t0'] ?? microtime(true))) * 1000;
+}
+
+/* RNF06: manejadores globales (causa + acción correctiva). */
+require_once __DIR__ . '/errores.php';

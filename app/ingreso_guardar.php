@@ -49,8 +49,9 @@ try {
         op_redir('ingresos.php');
     }
 
-    if ($producto <= 0 || !ctype_digit($cantidad) || (int) $cantidad <= 0 || $fecha === null) {
-        throw new RuntimeException('Revisa los datos: producto, cantidad y fecha son obligatorios.');
+    /* RF04: la fecha de recepción es opcional; si se omite se usa hoy. */
+    if ($producto <= 0 || !ctype_digit($cantidad) || (int) $cantidad <= 0) {
+        throw new RuntimeException('Revisa los datos: producto y cantidad (entero > 0) son obligatorios.');
     }
 
     $st = $pdo->prepare('SELECT 1 FROM productos WHERE id = :id AND activo = 1');
@@ -92,7 +93,7 @@ try {
             ':cantidad'  => (int) $cantidad,
             ':proveedor' => $proveedor > 0 ? $proveedor : null,
             ':numero'    => $numero !== '' ? $numero : null,
-            ':fecha'     => $fecha,
+            ':fecha'     => $fecha ?? date('Y-m-d 12:00:00'),
             ':by'        => $aud['by'],
             ':uat'       => $aud['at'],
             ':uby'       => $aud['by'],

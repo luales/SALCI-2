@@ -265,14 +265,9 @@ function op_alerta_si_critico(
         return;
     }
 
-    $ex = $pdo->prepare(
-        'SELECT 1 FROM registro_alertas
-          WHERE producto_id = :producto AND sucursal_id = :sucursal AND leida = 0'
-    );
-    $ex->execute([':producto' => $productoId, ':sucursal' => $sucursalId]);
-    if ($ex->fetchColumn() !== false) {
-        return;
-    }
+    /* RF02: se evalúa el saldo DESPUÉS de cada transacción. No se suprime la
+       alerta por existir una anterior sin leer: eso impediría avisar de nuevas
+       caídas del stock. Cada evento crítico queda registrado y notificado. */
 
     $suc = $pdo->prepare('SELECT nombre FROM sucursales WHERE id = :id');
     $suc->execute([':id' => $sucursalId]);
@@ -446,6 +441,21 @@ function op_enviar_resend(string $apiKey, string $destino, string $asunto, strin
     }
 }
 
+/** Registro local de los canales RF02 cuando no hay proveedor externo. */
+function op_log_rf02(string $canal, string $contenido): void
+{
+    $dir = __DIR__ . '/logs';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0775, true);
+    }
+    $archivo = $dir . '/rf02_' . $canal . '.log';
+    @file_put_contents(
+        $archivo,
+        '[' . date('c') . '] ' . trim($contenido) . PHP_EOL,
+        FILE_APPEND | LOCK_EX
+    );
+}
+
 /** Mejor esfuerzo: si falla correo/webhook NO se revierte la base de datos. */
 function op_notificar(array $alerta): void
 {
@@ -461,7 +471,12 @@ function op_notificar(array $alerta): void
             if ($apiKey !== '') {
                 op_enviar_resend($apiKey, $destino, $asunto, $cuerpo);
             } else {
-                @mail($destino, $asunto, $cuerpo, 'Content-Type: text/plain; charset=UTF-8');
+                /* Sin API key: se intenta mail() y, si el equipo no tiene SMTP,
+                   queda constancia del correo en logs/rf02_correo.log. */
+                $enviado = @mail($destino, $asunto, $cuerpo, 'Content-Type: text/plain; charset=UTF-8');
+                if (!$enviado) {
+                    op_log_rf02('correo', "PARA: $destino\nASUNTO: $asunto\n$cuerpo");
+                }
             }
         } catch (Throwable $e) {
             error_log('SALCI RF02 correo: ' . $e->getMessage());
@@ -469,8 +484,14 @@ function op_notificar(array $alerta): void
     }
 
     $url = defined('RF02_WEBHOOK_URL') ? (string) RF02_WEBHOOK_URL : '';
+    $payload = json_encode($alerta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    /* Sin URL configurada se conserva el POST simulado en el log local. */
+    if ($url === '' && $payload !== false) {
+        op_log_rf02('webhook', $payload);
+    }
+
     if ($url !== '' && filter_var($url, FILTER_VALIDATE_URL)) {
-        $payload = json_encode($alerta, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($payload === false) {
             error_log('SALCI RF02 webhook: no se pudo serializar la alerta.');
         } else {
