@@ -296,9 +296,14 @@ input {
     border-radius: 12px;
     background: rgba(255, 255, 255, .045);
     color: var(--texto);
+    color-scheme: dark;
     font-size: .95rem;
     font-family: inherit;
     transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+:root[data-tema="claro"] input {
+    color-scheme: light;
 }
 
 input::placeholder {
@@ -802,8 +807,26 @@ select {
     border-radius: 12px;
     background: rgba(255, 255, 255, .045);
     color: var(--texto);
+    color-scheme: dark;
     font-family: inherit;
     font-size: .9rem;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+:root[data-tema="claro"] select {
+    color-scheme: light;
+}
+
+select option,
+select optgroup {
+    background-color: var(--bg-1);
+    color: var(--texto);
+}
+
+:root[data-tema="claro"] select option,
+:root[data-tema="claro"] select optgroup {
+    background-color: #ffffff;
+    color: var(--texto);
 }
 
 select:focus {

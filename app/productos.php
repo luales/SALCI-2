@@ -49,7 +49,7 @@ $productos = $st->fetchAll();
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 1 · RF10/RF11/RF13</p>
+            <p class="eyebrow"></p>
             <h1>Catálogo de productos</h1>
             <p>
                 Contexto: <strong><?= e($ctx['nombre']) ?></strong>.
