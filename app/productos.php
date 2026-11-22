@@ -142,7 +142,7 @@ $productos = $st->fetchAll();
 
         <p class="nota">
             La baja es lógica (<code>activo = 0</code>): conserva el historial de ventas,
-            lotes y movimientos. RF01/RF02/RF13.
+            lotes y movimientos.
         </p>
     </main>
 </body>
