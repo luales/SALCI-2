@@ -450,6 +450,8 @@ nombre de base; descoméntalo y ejecútalo solo cuando sea necesario.
 
 ## 9. Evidencias y defensa
 
+- [`ENTREGA_RUBRICA.md`](ENTREGA_RUBRICA.md): índice único con toda la pauta,
+  evidencias, comandos de verificación y checklist de entrega.
 - `docs/defensa.md`: guion de presentación, recorrido de demostración y
   respuestas a las preguntas habituales de la defensa.
 - `docs/capturas/`: capturas del demo limpio (login, panel, POS y los CRUD).
