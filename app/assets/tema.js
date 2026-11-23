@@ -1,4 +1,4 @@
-/* SALCI · RNF06 — Tema oscuro slate-blue con conmutador persistente.
+/* SALCI · RNF06 — Conmutador de tema persistente (oscuro / claro).
    Se carga en el <head> para aplicar el tema guardado antes de pintar. */
 (function () {
     'use strict';
