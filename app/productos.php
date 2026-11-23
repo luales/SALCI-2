@@ -49,7 +49,7 @@ $productos = $st->fetchAll();
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 1 · RF10/RF11/RF13</p>
+            <p class="eyebrow"></p>
             <h1>Catálogo de productos</h1>
             <p>
                 Contexto: <strong><?= e($ctx['nombre']) ?></strong>.
@@ -142,7 +142,7 @@ $productos = $st->fetchAll();
 
         <p class="nota">
             La baja es lógica (<code>activo = 0</code>): conserva el historial de ventas,
-            lotes y movimientos. RF01/RF02/RF13.
+            lotes y movimientos.
         </p>
     </main>
 </body>

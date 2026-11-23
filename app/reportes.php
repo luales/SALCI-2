@@ -33,14 +33,14 @@ function render_tabla(array $cabeceras, array $filas, int $limite = 0): void
     echo '</tr></thead><tbody>';
 
     if (!$filas) {
-        echo '<tr><td class="vacio" colspan="' . count($cabeceras) . '">Sin datos para este filtro.</td></tr>';
+        echo '<tr><td class="vacío" colspan="' . count($cabeceras) . '">Sin datos para este filtro.</td></tr>';
     }
 
     foreach ($filas as $fila) {
-        $critico = in_array('CRITICO', $fila, true) ? ' class="critico"' : '';
+        $critico = in_array('CRITICO', $fila, true) ? ' class="crítico"' : '';
         echo '<tr' . $critico . '>';
         foreach ($fila as $valor) {
-            $clase = (string) $valor === 'CRITICO' ? ' class="stock-critico"' : '';
+            $clase = (string) $valor === 'CRÍTICO' ? ' class="stock-crítico"' : '';
             echo '<td' . $clase . '>' . e((string) $valor) . '</td>';
         }
         echo '</tr>';
@@ -87,11 +87,11 @@ foreach ($top5 as $t) {
 
     <main class="panel panel-ancho reportes">
         <section class="bienvenida">
-            <p class="eyebrow">RF03 · RF10 · RF11 · RF14</p>
+            <p class="eyebrow">RFF--FFF</p>
             <h1>Reportes y stock en vivo</h1>
             <p>
                 Indicadores del dashboard, catálogo con semáforo de stock crítico
-                y exportación CSV en UTF-8. Contexto:
+                y exportación. Contexto:
                 <strong><?= e($ctx['sucursal_nombre']) ?></strong>.
             </p>
         </section>
@@ -154,8 +154,8 @@ foreach ($top5 as $t) {
         <section class="detalle seccion">
             <h2>Stock en vivo</h2>
             <p class="nota">
-                Las filas en rojo tienen saldo igual o inferior al mínimo (RF10).
-                Esta es la consulta [PAUTA 2] del script <code>03_queries.sql</code>.
+                Las filas en rojo tienen saldo igual o inferior al mínimo.
+                Esta es la consulta del script <code>03_queries.sql</code>.
             </p>
             <?php render_tabla($hStock, $stock); ?>
             <p class="descargas">
@@ -165,7 +165,7 @@ foreach ($top5 as $t) {
         </section>
 
         <details class="detalle seccion">
-            <summary>Proveedores y lotes (relación 1:N) — [PAUTA 3]</summary>
+            <summary>Proveedores y lotes</summary>
             <?php render_tabla($hProveedores, $proveedores); ?>
             <p class="descargas">
                 <?php descarga_csv('proveedores', $suc, 'Descargar proveedores CSV'); ?>
@@ -173,12 +173,12 @@ foreach ($top5 as $t) {
         </details>
 
         <details class="detalle seccion">
-            <summary>Ventas y productos (relación N:N) — [PAUTA 4]</summary>
+            <summary>Ventas y productos</summary>
             <?php render_tabla($hVentas, $ventas, 20); ?>
         </details>
 
         <details class="detalle seccion">
-            <summary>Kardex de movimientos (RF13)</summary>
+            <summary>Kardex de movimientos</summary>
             <?php render_tabla($hKardex, $kardex, 20); ?>
             <p class="descargas">
                 <?php descarga_csv('kardex', $suc, 'Descargar kardex CSV'); ?>
@@ -186,8 +186,8 @@ foreach ($top5 as $t) {
         </details>
 
         <p class="nota">
-            Los CSV se generan con separador <code>;</code>, BOM UTF-8 y respetan
-            el filtro de sucursal del usuario (RF11, RF14).
+            Los CSV se generan con separador <code>;</code>, y respetan
+            el filtro de sucursal del usuario.
         </p>
     </main>
 </body>
