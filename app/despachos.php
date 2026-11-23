@@ -62,7 +62,7 @@ $compradorSel = (int) ($_GET['comprador_id'] ?? 0);
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · RF09</p>
+            <p class="eyebrow">Despachos</p>
             <h1>Órdenes de despacho</h1>
             <p>Solicitudes de entrega por sucursal, con cambio de estado hasta completado.</p>
         </section>

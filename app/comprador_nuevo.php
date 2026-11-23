@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="panel panel-estrecho">
         <section class="bienvenida">
-            <p class="eyebrow">RF08 · Contrapartes</p>
+            <p class="eyebrow">Nuevo comprador</p>
             <h1>Nuevo comprador</h1>
             <p>
                 El comprador es una entidad independiente. La venta guarda solo su

@@ -5,11 +5,11 @@ RF02 pide **dos canales**: correo electrónico y webhook cuando
 por lo que un fallo de red **no revierte** el movimiento de stock.
 
 Cada transacción que deja el saldo en o bajo el mínimo genera su alerta: no se
-suprime por una alerta anterior sin leer. En este equipo no hay SMTP ni API key
-de Resend, así que el correo queda en `app/logs/rf02_correo.log` y el webhook se
-recibe en `app/rf02_webhook_local.php` y queda en `app/logs/rf02_webhook.log`.
-Con una API key real, el correo se envía por Resend y el webhook puede apuntar
-a cualquier URL externa.
+suprime por una alerta anterior sin leer. Si `RF02_RESEND_API_KEY` está
+configurada, el correo se envía por Resend; si no, queda el registro local. El
+webhook se recibe en `app/rf02_webhook_local.php` para la demo y también puede
+apuntar a cualquier URL externa. La API key vive solo en
+`app/config.local.php`, que está en `.gitignore`.
 
 ---
 
@@ -35,10 +35,10 @@ Copiar `app/config.local.php.example` como `app/config.local.php` (ya está en
 
 ```php
 <?php
-define('RF02_RESEND_API_KEY', 're_XXXXXXXX');          // key rotada, sending_access
+define('RF02_RESEND_API_KEY', 're_TU_API_KEY');       // key rotada, sending_access
 define('RF02_RESEND_FROM',    'SALCI <onboarding@resend.dev>');
-define('RF02_EMAIL_DESTINO',  'gersonzja2@gmail.com');
-define('RF02_WEBHOOK_URL',    'https://webhook.site/XXXXXXXX');
+define('RF02_EMAIL_DESTINO',  'tu-correo@ejemplo.cl');
+define('RF02_WEBHOOK_URL',    'https://webhook.site/TU-ID');
 ```
 
 ### Remitente `onboarding@resend.dev`

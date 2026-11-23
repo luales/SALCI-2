@@ -40,7 +40,7 @@ $ventas = $st->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#050a12">
-    <title>Ventas (N:N) · <?= e(APP_NAME) ?></title>
+    <title>Ventas · <?= e(APP_NAME) ?></title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -48,7 +48,7 @@ $ventas = $st->fetchAll();
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla de transacciones N:N · RF15</p>
+            <p class="eyebrow">Ventas</p>
             <h1>Ventas registradas</h1>
             <p>
                 <code>ventas</code> se relaciona con <code>productos</code> a través de

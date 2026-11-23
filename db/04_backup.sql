@@ -10,13 +10,15 @@
 USE master;
 GO
 
-/* La ruta se deriva de la instancia para no depender del nombre MSSQL17. */
+/* La ruta se deriva de la instancia para no depender del nombre MSSQL17.
+   SERVERPROPERTY no garantiza la barra final, por eso se agrega solo si falta. */
+DECLARE @dir NVARCHAR(400) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(400));
 DECLARE @ruta NVARCHAR(400) =
-    CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(400)) + N'SALCI.bak';
+    @dir + CASE WHEN RIGHT(@dir, 1) = N'\' THEN N'' ELSE N'\' END + N'SALCI.bak';
 
-/* En este equipo (SQLEXPRESS01) la base de trabajo se llama "prueba".
-   Para respaldarla sin cambiar este script, usar el comando del README
-   sección 8, o reemplazar SALCI por prueba en las dos sentencias de abajo. */
+/* Si tu base no se llama SALCI, reemplaza el token SALCI por el nombre real
+   en una copia temporal de este archivo (ver README sección 8). La ruta del
+   .bak se deriva de la instancia, no de una carpeta fija. */
 
 PRINT 'Respaldando en: ' + @ruta;
 
@@ -49,6 +51,11 @@ GO
    -- Cerrar conexiones activas sobre la base
    ALTER DATABASE SALCI SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
    GO
+
+   -- @ruta se redeclara en este lote: la variable del BACKUP ya no existe.
+   DECLARE @dir_r NVARCHAR(400) = CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(400));
+   DECLARE @ruta NVARCHAR(400) =
+       @dir_r + CASE WHEN RIGHT(@dir_r, 1) = N'\' THEN N'' ELSE N'\' END + N'SALCI.bak';
 
    RESTORE DATABASE SALCI
    FROM DISK = @ruta

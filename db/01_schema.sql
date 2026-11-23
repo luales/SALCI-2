@@ -378,7 +378,6 @@ CREATE INDEX ix_alertas_pendientes      ON registro_alertas(sucursal_id, leida)
 GO
 
 /* ---------------------------------------------------------------------
-/* ---------------------------------------------------------------------
    13b. AUDITORIA AUTOMATICA (RF13)
    Defaults en updated_* para el alta y un trigger AFTER UPDATE por tabla.
    NO se usan triggers AFTER INSERT: SQL Server rechaza
@@ -462,6 +461,7 @@ CLOSE cur_aud;
 DEALLOCATE cur_aud;
 GO
 
+/* ---------------------------------------------------------------------
    14. VISTA DE APOYO  (RF10: stock en vivo con semaforo)
    --------------------------------------------------------------------- */
 CREATE VIEW vw_stock_en_vivo

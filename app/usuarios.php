@@ -53,7 +53,7 @@ $v = static fn(string $k): string => (string) ($target[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · RF05/RF06</p>
+            <p class="eyebrow">Usuarios</p>
             <h1>Usuarios del sistema</h1>
             <p>
                 Administradores activos: <strong><?= $adminsActivos ?></strong>.

@@ -521,7 +521,7 @@ $compradorNombre = $compradorActual !== null
 
     <main class="panel panel-ancho pos">
         <section class="bienvenida">
-            <p class="eyebrow">RF15 · Venta POS</p>
+            <p class="eyebrow">Punto de venta</p>
             <h1>Punto de venta</h1>
             <p>
                 Venta rápida en <strong><?= e($sucursalNombre) ?></strong>.

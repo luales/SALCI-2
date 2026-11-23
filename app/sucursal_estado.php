@@ -47,7 +47,7 @@ try {
 
             if ($usuarios > 0 || $movimientos > 0) {
                 throw new RuntimeException(
-                    'No se puede eliminar: la sucursal tiene usuarios, existencias o movimientos (RF07).'
+                    'No se puede eliminar: la sucursal tiene usuarios, existencias o movimientos.'
                 );
             }
 

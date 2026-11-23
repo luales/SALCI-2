@@ -86,8 +86,7 @@ function e(string $s): string
         </form>
 
         <footer class="pista">
-            <strong>Demo:</strong> admin · cajero.chillan<br>
-            <strong>Clave:</strong> Salci2026!
+            Acceso restringido a personal autorizado.
         </footer>
     </main>
     </div>

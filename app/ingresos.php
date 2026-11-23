@@ -71,7 +71,7 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 2 (1:N) · RF04/RF08</p>
+            <p class="eyebrow">Ingresos de mercadería</p>
             <h1>Ingresos de mercadería</h1>
             <p>
                 Contexto: <strong><?= e($ctx['nombre']) ?></strong>. Cada ingreso

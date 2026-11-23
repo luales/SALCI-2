@@ -2,8 +2,9 @@
 
 Basado en el informe `SALCI 30%`, sección 4.3 **Requerimientos No Funcionales**
 (atributos ISO 9126). Cada requisito está implementado y se puede comprobar en
-la instalación local de este equipo: SQL Server `.\SQLEXPRESS01`, base
-**`prueba`**, XAMPP y `http://localhost/salci/`.
+cualquier instalación local con XAMPP, PHP, SQL Server Express y
+`http://localhost/salci/`. El verificador detecta la instancia y la base desde
+`app/config.local.php` (o, si no existe, desde `app/config.php`).
 
 ## Comprobación en un solo comando
 
@@ -11,12 +12,20 @@ Desde la raíz del repositorio, con Apache y SQL Server iniciados:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File verificar_rnf.ps1
+
+# También puedes indicarlos de forma explícita:
+powershell -ExecutionPolicy Bypass -File verificar_rnf.ps1 -ServerInstance '.\SQLEXPRESS' -Database SALCI
 ```
 
-El script `verificar_rnf.ps1` comprueba automáticamente: cabecera `X-Response-Time-Ms`
-(RNF01), `/health` contra `prueba` (RNF04), login admin + JWT (RNF03), tema y
-pantalla de error (RNF06), los 6 chequeos SQL de FK/CHECK/índices (RNF02/RNF05)
-y los 12 triggers de auditoría de RF13. Al terminar imprime
+Si no se pasan parámetros, el script lee `DB_DSN` de `config.local.php`, verifica
+que la instancia responda y, si no, prueba `.\SQLEXPRESS`, `.\SQLEXPRESS01`,
+`(local)\SQLEXPRESS` y `localhost\SQLEXPRESS`; elige la primera base
+`SALCI`/`prueba` disponible (o la primera base de usuario que encuentre).
+
+Comprueba automáticamente: cabecera `X-Response-Time-Ms` (RNF01), `health.php`
+contra la base detectada (RNF04), login admin + JWT (RNF03), tema y pantalla de
+error (RNF06), los 6 chequeos SQL de FK/CHECK/índices (RNF02/RNF05) y los 12
+triggers de auditoría de RF13. Al terminar imprime
 `Resultado: 7 correctos, 0 a revisar` y devuelve código 0.
 
 Para revisar cada requisito por separado, usar los comandos de las secciones siguientes.
@@ -26,7 +35,7 @@ Para revisar cada requisito por separado, usar los comandos de las secciones sig
 | RNF01 | Eficiencia — tiempo de respuesta | `app/config.php` publica `X-Response-Time-Ms` en **todas** las respuestas y registra en el log las que superan 500 ms | `curl -I http://localhost/salci/login.php` → cabecera presente; panel la muestra en "Estado de la conexión" |
 | RNF02 | Fiabilidad — integridad transaccional | Claves foráneas y CHECK nativos de SQL Server (equivalentes a `PRAGMA foreign_keys=ON`) + `op_tx()` en `app/operaciones.php` | `db/10_verificacion_rnf.sql` → 0 FK desactivadas y 0 CHECK desactivados |
 | RNF03 | Funcionalidad — seguridad de acceso | SHA-256 con sal de 16 bytes en `app/operaciones.php` (`op_hash_password`) y verificación con `hash_equals` en `app/auth.php`; JWT HS256 firmado con `JWT_SECRET`, expira en 24 h y exige `alg = HS256` | Login con admin/operador; token visible en el panel |
-| RNF04 | Fiabilidad — disponibilidad | `app/health.php`: `GET /health`, público, JSON con estado de PHP y SQL Server, 200 si está bien / 503 si no | `curl -i http://localhost/salci/health.php` |
+| RNF04 | Fiabilidad — disponibilidad | `app/health.php`: `GET /salci/health.php`, público, JSON con estado de PHP y SQL Server, 200 si está bien / 503 si no | `curl -i http://localhost/salci/health.php` |
 | RNF05 | Eficiencia — rendimiento de almacenamiento | Índices B-Tree (UNIQUE/CLUSTERED/NONCLUSTERED) sobre `productos.sku`, `usuarios.username` y `sucursal_id` en las tablas operativas | `db/10_verificacion_rnf.sql` → todas las filas en `OK` |
 | RNF06 | Usabilidad — operabilidad y ergonomía | `app/errores.php` informa **causa + acción correctiva** en errores controlados y no controlados; diseño responsive con modo oscuro slate-blue y conmutador persistente en `app/assets/tema.js` | Provocar un error; botón ◐/◑ en la barra y en el login |
 
@@ -38,7 +47,7 @@ Para revisar cada requisito por separado, usar los comandos de las secciones sig
 su vez incluyen `auth.php` y `operaciones.php`). Guarda `microtime(true)` en
 `$GLOBALS['salci_t0']` y registra un `header_register_callback` que añade la
 cabecera justo antes de enviar los headers, así que funciona incluso en
-respuestas que terminan con `exit` (redirects, CSV, `/health`).
+respuestas que terminan con `exit` (redirects, CSV, `health.php`).
 
 ```bat
 curl -I http://localhost/salci/login.php
@@ -48,7 +57,7 @@ REM X-Response-Time-Ms: 12.34
 Objetivo: **< 500 ms en el 99%** de las transacciones. Si una respuesta pasa de
 500 ms se escribe `SALCI RNF01: respuesta lenta ...` en el log de PHP; eso
 permite medir el porcentaje real con el tiempo. La cabecera la emite PHP, por lo
-que aparece en las respuestas dinámicas (páginas, CSV y `/health`); los archivos
+que aparece en las respuestas dinámicas (páginas, CSV y `health.php`); los archivos
 estáticos que sirve Apache directamente (`style.css`, `tema.js`) no pasan por PHP.
 
 Para provocar la señal de alerta del objetivo se puede crear un script temporal
@@ -81,10 +90,14 @@ el equivalente es verificar que `sys.foreign_keys.is_disabled = 0` y
 `op_tx()` (INGRESOS, DESPACHOS, transferencias, anulación de venta, POS), que
 usa `beginTransaction() / commit() / rollBack()`.
 
+El propio `verificar_rnf.ps1` hace este reemplazo. Para hacerlo a mano:
+
 ```powershell
-$sql = (Get-Content db\10_verificacion_rnf.sql -Raw) -replace 'USE SALCI;','USE prueba;'
+$server = '.\SQLEXPRESS'
+$db     = 'SALCI'
+$sql = (Get-Content db\10_verificacion_rnf.sql -Raw).Replace('USE SALCI;', "USE $db;")
 $sql | Set-Content $env:TEMP\rnf.sql -Encoding utf8
-sqlcmd -S .\SQLEXPRESS01 -E -C -b -f 65001 -i $env:TEMP\rnf.sql
+sqlcmd -S $server -E -C -b -f 65001 -i $env:TEMP\rnf.sql
 ```
 
 ## RNF03 — Seguridad de acceso
@@ -112,7 +125,7 @@ para que cualquier monitor pueda consultarlo.
   "target": "99.9%",
   "checks": {
     "php": { "ok": true, "version": "8.x" },
-    "database": { "ok": true, "driver": "sqlsrv", "name": "prueba", "detail": null }
+    "database": { "ok": true, "driver": "sqlsrv", "name": "SALCI", "detail": null }
   },
   "response_ms": 8.42
 }
@@ -122,9 +135,9 @@ Si SQL Server no responde, devuelve HTTP **503** con `"status": "error"`,
 más `causa` y `accion` (RNF06).
 
 Para comprobar el 503 sin detener el servicio se puede cambiar temporalmente
-`Database=prueba` por `Database=base_inexistente` en `config.local.php`, esperar
+`Database=<tu-base>` por `Database=base_inexistente` en `config.local.php`, esperar
 **más de 2 segundos** (XAMPP tiene `opcache.revalidate_freq=2`, si se pide antes
-sigue sirviendo la configuración cacheada), pedir `/health` con `curl -i` y
+sigue sirviendo la configuración cacheada), pedir `health.php` con `curl -i` y
 **restaurar el archivo enseguida**:
 
 ```

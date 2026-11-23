@@ -10,11 +10,13 @@
    Server son B-Tree. Se comprueba que existan sobre sku, username y
    sucursal_id, las columnas de alta selectividad del informe.
 
-   En este equipo: reemplazar USE SALCI; por USE prueba; o ejecutar una
-   copia temporal con:
-     $sql = (Get-Content db\10_verificacion_rnf.sql -Raw) -replace 'USE SALCI;','USE prueba;'
+   Si tu base no se llama SALCI, reemplaza USE SALCI; por USE <tu-base>; en
+   una copia temporal. verificar_rnf.ps1 ya lo hace automáticamente.
+     $server = '.\SQLEXPRESS'
+     $db     = 'SALCI'
+     $sql = (Get-Content db\10_verificacion_rnf.sql -Raw).Replace('USE SALCI;', "USE $db;")
      $sql | Set-Content $env:TEMP\rnf.sql -Encoding utf8
-     sqlcmd -S .\SQLEXPRESS01 -E -C -b -f 65001 -i $env:TEMP\rnf.sql
+     sqlcmd -S $server -E -C -b -f 65001 -i $env:TEMP\rnf.sql
    ===================================================================== */
 
 USE SALCI;
@@ -29,7 +31,8 @@ WITH idx AS (
         COL_NAME(ic.object_id, ic.column_id)       AS columna,
         i.name                                     AS indice,
         CASE i.type WHEN 1 THEN 'CLUSTERED' ELSE 'NONCLUSTERED' END AS tipo,
-        i.is_unique
+        i.is_unique,
+        ic.key_ordinal
     FROM sys.indexes i
     JOIN sys.index_columns ic
       ON ic.object_id = i.object_id
@@ -76,7 +79,7 @@ UNION ALL
 
 SELECT 'RNF05', 'Índices B-Tree sobre cualquier sucursal_id',
        CASE WHEN COUNT(*) > 0 THEN 'OK' ELSE 'REVISAR' END, COUNT(*)
-FROM idx WHERE columna = 'sucursal_id';
+FROM idx WHERE columna = 'sucursal_id' AND key_ordinal = 1;
 GO
 
 /* Evidencia detallada de los índices exigidos. */

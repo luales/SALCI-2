@@ -87,7 +87,7 @@ foreach ($top5 as $t) {
 
     <main class="panel panel-ancho reportes">
         <section class="bienvenida">
-            <p class="eyebrow">RF03 · RF10 · RF11 · RF14</p>
+            <p class="eyebrow">Reportes</p>
             <h1>Reportes y stock en vivo</h1>
             <p>
                 Indicadores del dashboard, catálogo con semáforo de stock crítico
@@ -154,8 +154,7 @@ foreach ($top5 as $t) {
         <section class="detalle seccion">
             <h2>Stock en vivo</h2>
             <p class="nota">
-                Las filas en rojo tienen saldo igual o inferior al mínimo (RF10).
-                Esta es la consulta [PAUTA 2] del script <code>03_queries.sql</code>.
+                Las filas en rojo tienen saldo igual o inferior al mínimo definido.
             </p>
             <?php render_tabla($hStock, $stock); ?>
             <p class="descargas">
@@ -165,7 +164,7 @@ foreach ($top5 as $t) {
         </section>
 
         <details class="detalle seccion">
-            <summary>Proveedores y lotes (relación 1:N) — [PAUTA 3]</summary>
+            <summary>Proveedores y lotes</summary>
             <?php render_tabla($hProveedores, $proveedores); ?>
             <p class="descargas">
                 <?php descarga_csv('proveedores', $suc, 'Descargar proveedores CSV'); ?>
@@ -173,12 +172,12 @@ foreach ($top5 as $t) {
         </details>
 
         <details class="detalle seccion">
-            <summary>Ventas y productos (relación N:N) — [PAUTA 4]</summary>
+            <summary>Ventas y productos</summary>
             <?php render_tabla($hVentas, $ventas, 20); ?>
         </details>
 
         <details class="detalle seccion">
-            <summary>Kardex de movimientos (RF13)</summary>
+            <summary>Kardex de movimientos</summary>
             <?php render_tabla($hKardex, $kardex, 20); ?>
             <p class="descargas">
                 <?php descarga_csv('kardex', $suc, 'Descargar kardex CSV'); ?>
@@ -186,8 +185,7 @@ foreach ($top5 as $t) {
         </details>
 
         <p class="nota">
-            Los CSV se generan con separador <code>;</code>, BOM UTF-8 y respetan
-            el filtro de sucursal del usuario (RF11, RF14).
+            Los archivos CSV respetan el filtro de sucursal del usuario.
         </p>
     </main>
 </body>

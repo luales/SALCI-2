@@ -37,8 +37,7 @@ $respuesta = [
     'status'    => $estado,
     'app'       => APP_NAME,
     'timestamp' => gmdate('c'),
-    'target'    => '99.9%',
-    /* RNF06: también el JSON de monitoreo explica causa y acción. */
+    /* El JSON de monitoreo explica causa y acción si hay una falla. */
     'causa'     => $estado === 'ok' ? null : $info['causa'],
     'accion'    => $estado === 'ok' ? null : $info['accion'],
     'checks'    => [
@@ -88,7 +87,7 @@ $texto = $estado === 'ok'
             aria-pressed="false" aria-label="Cambiar tema">◐</button>
     <div class="acceso" style="max-width:620px">
         <main class="tarjeta" style="max-width:none">
-            <p class="eyebrow">RNF04 · Monitoreo</p>
+            <p class="eyebrow">Estado del sistema</p>
             <h2>Estado del servicio</h2>
 
             <div class="flash <?= $color ?>" role="status">
@@ -101,11 +100,8 @@ $texto = $estado === 'ok'
                 <dt>Base de datos</dt>
                 <dd><?= $h($respuesta['checks']['database']['name'] ?? '—') ?>
                     (<?= $h($respuesta['checks']['database']['driver']) ?>)</dd>
-                <dt>Disponibilidad objetivo</dt>
-                <dd><?= $h($respuesta['target']) ?></dd>
                 <dt>Tiempo de respuesta</dt>
-                <dd><?= $h($respuesta['response_ms']) ?> ms
-                    · cabecera <code>X-Response-Time-Ms</code></dd>
+                <dd><?= $h($respuesta['response_ms']) ?> ms</dd>
                 <dt>Última verificación</dt>
                 <dd class="mono"><?= $h($respuesta['timestamp']) ?></dd>
                 <?php if ($error !== null): ?>

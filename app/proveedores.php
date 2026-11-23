@@ -59,7 +59,7 @@ $v = static fn(string $k): string => (string) ($proveedor[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 2 (1:N) · RF08</p>
+            <p class="eyebrow">Proveedores</p>
             <h1>Proveedores</h1>
             <p>Cada proveedor puede tener muchos lotes. Los datos de contraparte
                viven aquí y no se repiten en el kardex.</p>

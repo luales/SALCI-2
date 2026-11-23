@@ -48,10 +48,9 @@ $sucursalId = $sucId;
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla independiente · RF08</p>
+            <p class="eyebrow">Compradores</p>
             <h1>Compradores</h1>
-            <p>RUT, nombre, teléfono y correo viven en su propia tabla y se
-               referencian desde ventas y despachos. No se repiten en el kardex.</p>
+            <p>Registro de compradores para ventas y despachos.</p>
         </section>
 
         <?php render_flash_op(); ?>

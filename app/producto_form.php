@@ -51,14 +51,14 @@ $valores = [
 
     <main class="panel">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 1</p>
+            <p class="eyebrow">Producto</p>
             <h1><?= $nuevo ? 'Nuevo producto' : 'Editar producto' ?></h1>
             <p>
                 <?php if (!$esAdmin): ?>
                     Modo consulta: tu rol es <strong><?= e((string) $user['rol']) ?></strong>.
                 <?php elseif ($nuevo): ?>
                     Se creará con stock 0 en todas las sucursales activas; carga las
-                    existencias desde <a href="ingresos.php">Ingresos</a> (RF04).
+                    existencias desde <a href="ingresos.php">Ingresos</a>.
                 <?php else: ?>
                     El SKU es único en todo el catálogo.
                 <?php endif; ?>

@@ -81,7 +81,7 @@ function salci_error_html(string $causa, string $accion, ?Throwable $e = null): 
         . '<title>Error · ' . htmlspecialchars(APP_NAME, ENT_QUOTES, 'UTF-8') . '</title>'
         . '<link rel="stylesheet" href="assets/style.css"></head>'
         . '<body class="centrado"><main class="tarjeta error-pagina">'
-        . '<p class="eyebrow">RNF06 · Error informado</p>'
+        . '<p class="eyebrow">Error del sistema</p>'
         . '<h2>No se pudo completar la operación</h2>'
         . '<p class="error-bloque"><strong>Causa:</strong> ' . $causa . '</p>'
         . '<p class="error-bloque"><strong>Acción correctiva:</strong> ' . $accion . '</p>'

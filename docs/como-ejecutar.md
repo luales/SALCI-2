@@ -19,25 +19,30 @@ que hagas tú no aparece en el equipo, salvo que trabajen sobre un servidor com�
 
 ---
 
-## 0. Este equipo (donde ya está corriendo)
+## 0. Instancia y base (cualquier SQL Express)
 
-En este PC la instancia `.\SQLEXPRESS` está **detenida** y no se puede iniciar
-sin permisos de administrador. La instancia en ejecución es `.\SQLEXPRESS01` y
-la base de trabajo es **`prueba`** (no `SALCI`). La tabla original del curso se
-conservó como `productos_antiguo`.
+Por defecto el proyecto usa `.\SQLEXPRESS` y la base `SALCI`. Si tu instancia se
+llama de otro modo (por ejemplo `SQLEXPRESS01`) o tu base es `prueba`, crea
+`app/config.local.php` desde la plantilla y define `DB_DSN`:
 
-- Repositorio: `C:\Users\aleks\Documents\SALCI-2`
-- Apache: ya corriendo; unión creada en `C:\xampp\htdocs\salci`
-- URL: `http://localhost/salci/login.php`
-- `app/config.local.php`: `Server=.\SQLEXPRESS01;Database=prueba` + `JWT_SECRET` propio
+```php
+define('DB_DSN', 'sqlsrv:Server=.\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
+define('JWT_SECRET', 'clave-generada-en-este-equipo');
+```
 
-Para recargar el demo en este equipo:
+`verificar_rnf.ps1` lee ese DSN; si la instancia no responde, busca otras
+instancias habituales y una base `SALCI`/`prueba`. También puedes pasar
+`-ServerInstance` y `-Database` de forma explícita.
+
+Para recargar el demo con tu servidor/base:
 
 ```powershell
-$sql = (Get-Content db\02_seed.sql -Raw) -replace 'USE SALCI;', 'USE prueba;'
-$tmp = Join-Path $env:TEMP 'seed_prueba.sql'
+$server = '.\SQLEXPRESS'
+$db     = 'SALCI'
+$sql = (Get-Content db\02_seed.sql -Raw).Replace('USE SALCI;', "USE $db;")
+$tmp = Join-Path $env:TEMP 'seed_salci.sql'
 $sql | Set-Content $tmp -Encoding utf8
-sqlcmd -S .\SQLEXPRESS01 -E -C -b -f 65001 -i $tmp
+sqlcmd -S $server -E -C -b -f 65001 -i $tmp
 ```
 
 El seed reinicia los `IDENTITY`, así que los IDs del demo son siempre los
@@ -133,8 +138,8 @@ Crear una unión de directorios (una sola vez):
 mklink /J "C:\xampp\htdocs\salci" "C:\ruta\completa\SALCI-2\app"
 ```
 
-En este equipo la unión ya existe y apunta a
-`C:\Users\aleks\Documents\SALCI-2\app`.
+La unión debe apuntar a la carpeta `app` de **tu** copia del repositorio, por
+ejemplo `C:\ruta\completa\SALCI-2\app`.
 
 Iniciar Apache desde el panel de XAMPP y abrir:
 
@@ -245,8 +250,8 @@ Para la evaluación local, la opción recomendada es **cada uno con su base**.
 | Síntoma | Causa probable | Solución |
 |---|---|---|
 | HTTP 500 al entrar | No conecta a SQL Server | Revisar `DB_DSN` y que el servicio esté iniciado |
-| `Error Locating Server/Instance Specified` | La instancia está detenida o el nombre es otro | Iniciar `MSSQL$SQLEXPRESS` o usar `.\SQLEXPRESS01` en `DB_DSN` |
-| `Cannot open database "prueba"` | Falta cargar la base de este equipo | Ejecutar las migraciones 05–09 y el seed con `USE prueba` (§0) |
+| `Error Locating Server/Instance Specified` | El nombre de instancia no coincide | Ejecuta `verificar_rnf.ps1` sin parámetros para detectarla, o pasa `-ServerInstance` correcto |
+| `Cannot open database "..."` | Falta crear/cargar la base | Ejecuta las migraciones 05–11 y el seed con tu nombre de base (§0) |
 | "Tu acceso expiró (24 h)" | Venció el JWT | Entrar de nuevo; es el comportamiento esperado de RF05 |
 | `An invalid keyword 'CharacterSet'` | DSN con `CharacterSet` | Quitarlo: `pdo_sqlsrv` usa UTF-8 por defecto |
 | `Login failed for user` | Autenticación | Usar Windows (`DB_USER = null`) o crear login SQL |
@@ -258,22 +263,14 @@ Para la evaluación local, la opción recomendada es **cada uno con su base**.
 
 ## 8. Respaldo
 
-El respaldo no se guarda en Git. Para generarlo en tu equipo:
+El respaldo no se guarda en Git. Genera el `.bak` en la carpeta por defecto de
+tu instancia; si tu base no se llama `SALCI`, reemplaza ese token en una copia
+temporal (ver README §8):
 
-```bat
-sqlcmd -S .\SQLEXPRESS -E -C -i db\04_backup.sql
+```powershell
+sqlcmd -S .\SQLEXPRESS -E -C -b -f 65001 -i db\04_backup.sql
 ```
 
-En este equipo, para respaldar la base `prueba`:
-
-```bat
-sqlcmd -S .\SQLEXPRESS01 -E -C -Q "BACKUP DATABASE prueba TO DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS01\MSSQL\Backup\prueba.bak' WITH INIT, CHECKSUM"
-```
-
-Restaurar (reemplaza la base actual):
-
-```bat
-sqlcmd -S .\SQLEXPRESS -E -C -Q "ALTER DATABASE SALCI SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
-sqlcmd -S .\SQLEXPRESS -E -C -Q "RESTORE DATABASE SALCI FROM DISK = N'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS\MSSQL\Backup\SALCI.bak' WITH REPLACE"
-sqlcmd -S .\SQLEXPRESS -E -C -Q "ALTER DATABASE SALCI SET MULTI_USER"
-```
+Para restaurar, descomenta el bloque final de `db/04_backup.sql` con tu nombre
+de base. No copies rutas `MSSQL17...` de otro equipo: la ruta se obtiene con
+`SERVERPROPERTY('InstanceDefaultBackupPath')`.

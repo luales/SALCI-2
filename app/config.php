@@ -15,7 +15,7 @@ if (is_file($local)) {
 }
 
 defined('APP_NAME')  || define('APP_NAME', 'SALCI');
-defined('APP_DEBUG') || define('APP_DEBUG', true);   // en producción: false
+defined('APP_DEBUG') || define('APP_DEBUG', false);  // true solo en desarrollo, vía config.local.php
 
 /* Conexión a SQL Server Express por shared memory (mismo equipo).
    Si se conecta desde otro PC, habilitar TCP/IP y usar
@@ -28,7 +28,7 @@ defined('DB_PASS') || define('DB_PASS', null);
 
 defined('SESSION_NAME') || define('SESSION_NAME', 'salci_sid');
 
-/* RF02: alertas critiques por correo y webhook.
+/* RF02: alertas críticas por correo y webhook.
    Vacío = solo se registra en registro_alertas (no se intenta red externa).
    Un fallo de red NUNCA revierte la transacción de stock. */
 defined('RF02_EMAIL_DESTINO') || define('RF02_EMAIL_DESTINO', '');
@@ -40,8 +40,8 @@ defined('RF02_WEBHOOK_URL')   || define('RF02_WEBHOOK_URL', '');
 defined('RF02_RESEND_API_KEY') || define('RF02_RESEND_API_KEY', '');
 defined('RF02_RESEND_FROM')    || define('RF02_RESEND_FROM', 'SALCI <onboarding@resend.dev>');
 
-/* RF05: clave para firmar el JWT HS256 (24 h). Sobreescribir en producción. */
-defined('JWT_SECRET') || define('JWT_SECRET', 'SALCI-CAMBIAR-EN-PRODUCCION-2026');
+/* RF05: la clave de firma NO se versiona. Se exige en config.local.php.
+   La validación está al final de este archivo, después de cargar errores.php. */
 
 /* ---------------------------------------------------------------------
    RNF01 — Eficiencia: tiempo de respuesta.
@@ -77,3 +77,14 @@ function salci_response_ms(): float
 
 /* RNF06: manejadores globales (causa + acción correctiva). */
 require_once __DIR__ . '/errores.php';
+
+/* RF05: fallo explícito si no se configuró una clave de firma real. */
+if (!defined('JWT_SECRET')
+    || strlen((string) JWT_SECRET) < 32
+    || stripos((string) JWT_SECRET, 'PEG-AQUI') !== false) {
+    throw new RuntimeException(
+        'Falta una clave JWT_SECRET válida en app/config.local.php. '
+        . 'Cópiala desde config.local.php.example y genera una con: '
+        . 'php -r "echo bin2hex(random_bytes(32));"'
+    );
+}

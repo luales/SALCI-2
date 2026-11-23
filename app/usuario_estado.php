@@ -42,7 +42,7 @@ try {
 
                 if ($admins <= 1) {
                     throw new RuntimeException(
-                        'No se puede eliminar al último administrador activo (RF06).'
+                        'No se puede eliminar al último administrador activo.'
                     );
                 }
             }

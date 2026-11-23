@@ -5,24 +5,31 @@ declare(strict_types=1);
    Configuración local (no se sube a GitHub)
    ---------------------------------------------------------------------
    Copiar este archivo como config.local.php y descomentar lo que
-   corresponda. Solo se necesita si tu equipo no usa autenticación
-   de Windows o si la instancia tiene otro nombre.
+   corresponda. JWT_SECRET es obligatorio; lo demás es opcional según
+   la instancia, la autenticación y los canales de alerta.
    --------------------------------------------------------------------- */
 
 /* Autenticación con usuario y clave de SQL Server */
 // define('DB_USER', 'salci_app');
 // define('DB_PASS', 'TuClaveSegura');
 
-/* Instancia con otro nombre o en otro equipo */
-// define('DB_DSN', 'sqlsrv:Server=MI_PC\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1');
+/* Instancia con otro nombre o en otro equipo.
+   Ejemplos (descomenta solo el que corresponda):
+     .\SQLEXPRESS      -> instalación típica de SQL Server Express
+     .\SQLEXPRESS01    -> segunda instancia Express
+     (local)\SQLEXPRESS o MI_PC\SQLEXPRESS -> también válidos
+   verificar_rnf.ps1 lee este DB_DSN; si la instancia no responde, busca otras
+   instancias habituales y una base SALCI/prueba automáticamente. */
+// define('DB_DSN', 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
 
 /* Mostrar errores detallados (útil en desarrollo, no en producción) */
 // define('APP_DEBUG', true);
 
-/* RF05: la clave de ejemplo de config.php NO es segura.
-   Generar una con:  php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
-   y pegarla aquí antes de la defensa o de subir el proyecto. */
-// define('JWT_SECRET', 'peg-aqui-la-clave-de-64-caracteres');
+/* RF05: OBLIGATORIO. config.php ya no trae una clave por defecto.
+   Generar una clave única con:
+     php -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+   y reemplazar el valor de ejemplo de abajo. */
+define('JWT_SECRET', 'PEG-AQUI-CAMBIAR-POR-64-CARACTERES-HEX');
 
 /* RF02: correo de alertas vía Resend.
    Usar una API key con permiso sending_access (NUNCA full_access).
@@ -35,7 +42,7 @@ declare(strict_types=1);
 /* RF02: segundo canal (JSON POST). webhook.site sirve para la demo. */
 // define('RF02_WEBHOOK_URL', 'https://webhook.site/xxxx');
 
-/* RF02 en este equipo (Sin SMTP/API key): el correo queda en
-   app/logs/rf02_correo.log y el webhook se recibe localmente. */
+/* RF02 sin proveedor externo: el correo queda en app/logs/rf02_correo.log
+   y el webhook se recibe localmente. */
 // define('RF02_EMAIL_DESTINO', 'alertas@salci.local');
 // define('RF02_WEBHOOK_URL', 'http://localhost/salci/rf02_webhook_local.php');

@@ -56,7 +56,7 @@ $productos = $pdo->query(
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">RF12 · doble asiento</p>
+            <p class="eyebrow">Transferencias entre sucursales</p>
             <h1>Transferencias entre sucursales</h1>
             <p>
                 Descuento en origen, incremento en destino y dos filas de kardex

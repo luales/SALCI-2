@@ -1,11 +1,12 @@
 # Guion de presentación y defensa oral
 
 Duración sugerida: 8–10 minutos de demostración + 5 minutos de preguntas.
-Todo se ejecuta sobre XAMPP y, en este equipo, SQL Server `.\SQLEXPRESS01` con
-la base **`prueba`** (la instancia `.\SQLEXPRESS` está detenida). Si se pide
-reiniciar el demo, seguir el comando de la sección 0 de `docs/como-ejecutar.md`,
-que ajusta el `USE SALCI;` del seed a `USE prueba;`. En una instalación nueva
-con base `SALCI`, el comando es `sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\02_seed.sql`.
+Todo se ejecuta sobre XAMPP y cualquier SQL Server Express local. Por defecto
+se usa `.\SQLEXPRESS` y la base `SALCI`; si tu equipo tiene otra instancia o
+base, indícalo en `app/config.local.php` o con los parámetros de
+`verificar_rnf.ps1`. Si se pide reiniciar el demo, sigue el comando de la
+sección 0 de `docs/como-ejecutar.md`, que ajusta el `USE SALCI;` del seed a tu
+nombre de base.
 
 ---
 
@@ -63,8 +64,8 @@ Abrir `db/03_queries.sql` y ejecutarlo con:
 sqlcmd -S .\SQLEXPRESS -E -C -f 65001 -i db\03_queries.sql
 ```
 
-En este equipo (base `prueba`), reemplazar el `USE SALCI;` por
-`USE prueba;` en una copia temporal del archivo antes de ejecutarlo.
+Si tu base no se llama `SALCI`, reemplaza el `USE SALCI;` por `USE <tu-base>;`
+en una copia temporal del archivo antes de ejecutarlo.
 
 | Pauta | Consulta | Qué demuestra |
 |---|---|---|
@@ -131,8 +132,8 @@ en voz alta:
 - **RNF03:** contraseña `SHA-256(salt || password)` con 16 bytes de sal,
   comparada con `hash_equals`, y JWT HS256 de 24 h cuya firma y algoritmo se
   validan en cada pantalla.
-- **RNF04:** `GET /health` es público, devuelve JSON con estado de PHP y de SQL
-  Server y usa 503 si la base cae; es el soporte del objetivo 99,9%.
+- **RNF04:** `GET /salci/health.php` es público, devuelve JSON con estado de PHP
+  y de SQL Server y usa 503 si la base cae; es el soporte del objetivo 99,9%.
 - **RNF05:** los índices B-Tree ya están en el schema (`uq_productos_sku`,
   `uq_usuarios_username`, `ix_inventario_sucursal`, ...). El script de verificación
   imprime la evidencia; no duplicamos índices innecesariamente.
@@ -157,3 +158,23 @@ Demostración rápida: `curl -I http://localhost/salci/login.php`, abrir
 PNG/SVG desde <https://mermaid.live> o con
 `mmdc -i figura3-mer.mmd -o figura3-mer.png`. El MER también está como
 DBML en `db/diagrama.dbml` (dbdiagram.io).
+
+---
+
+## 7. Cierre: factibilidad, trabajo grupal y ética (30 s)
+
+> “El prototipo es factible en la infraestructura local de la universidad o de
+> una PyME: XAMPP, PHP 8 y SQL Server Express son gratuitos, no requieren
+> servidores dedicados y la base se recrea con dos scripts. Para producción
+> solo habría que mover la base a una instancia con respaldo programado,
+> cambiar `JWT_SECRET`, desactivar `APP_DEBUG` y definir las credenciales en
+> `app/config.local.php`, que no se versiona.
+
+> El trabajo se dividió en modelo/SQL, aplicación, pruebas y documentación;
+> cada integrante puede recrear el entorno desde el README. No se versionan
+> bases, respaldos, claves de API ni datos personales reales: la demo usa
+> datos ficticios. Las pruebas se ejecutan sobre una copia local y la semilla
+> se recarga antes de la presentación para dejar solo los datos de la pauta.”
+
+Cerrar mostrando el estado limpio: 3 sucursales, 5 usuarios, 8 productos,
+13 lotes, 7 ventas y 3 despachos de demostración.

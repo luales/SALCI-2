@@ -70,7 +70,7 @@ $fecha = date('d-m-Y H:i', strtotime((string) $venta['fecha']));
 
     <main class="panel panel-estrecho">
         <section class="bienvenida no-print">
-            <p class="eyebrow">RF15 · Comprobante</p>
+            <p class="eyebrow">Comprobante de venta</p>
             <h1>Venta registrada</h1>
             <p>El stock fue descontado y el movimiento quedó en el kardex.</p>
         </section>

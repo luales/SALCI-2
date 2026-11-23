@@ -8,10 +8,10 @@ Prototipo PHP completo: login JWT, panel por rol, POS (RF15), reportes y CSV,
 CRUD de productos, proveedores/lotes, despachos, transferencias, usuarios,
 sucursales y ventas N:N; notificaciones RF02 y auditoría RF13.
 
-**Equipo donde está corriendo ahora:** SQL Server 2025 Express, instancia
-`.\SQLEXPRESS01`, base de datos **`prueba`** (ver §3.0). La instancia
-`.\SQLEXPRESS` está detenida y no se puede iniciar sin permisos de
-administrador, por eso `app/config.local.php` apunta a `SQLEXPRESS01/prueba`.
+**Instancia y base:** el prototipo funciona con cualquier SQL Server Express
+local. Por defecto usa `.\SQLEXPRESS` y la base `SALCI`; si tu equipo tiene
+otro nombre de instancia o base, lo indicas en `app/config.local.php` (ignorado
+por Git) y `verificar_rnf.ps1` detecta esos valores automáticamente (ver §3.0).
 
 ---
 
@@ -21,7 +21,7 @@ administrador, por eso `app/config.local.php` apunta a `SQLEXPRESS01/prueba`.
 |---|---|
 | XAMPP / PHP | 8.5.12 ZTS x64 (`C:\xampp`) |
 | Extensiones | `pdo_sqlsrv` y `sqlsrv` cargadas |
-| SQL Server | 2025 Express, instancia `SQLEXPRESS` |
+| SQL Server | Express (cualquier instancia local: `SQLEXPRESS`, `SQLEXPRESS01`, ...) |
 | Autenticación | mixta (Windows + SQL) |
 | ODBC | Driver 17 for SQL Server |
 
@@ -62,7 +62,7 @@ SALCI-2/
    ├─ db.php               conexión PDO única
    ├─ auth.php             sesión, hash, JWT y roles
    ├─ errores.php          RNF06: causa + acción en cada error
-    ├─ health.php           RNF04: endpoint público GET /health
+    ├─ health.php           RNF04: endpoint público GET /salci/health.php
     ├─ login.php            formulario de ingreso
    ├─ index.php            panel (Hola admin / Hola trabajador)
    ├─ logout.php           cierre de sesión
@@ -100,31 +100,60 @@ SALCI-2/
 
 ## 3. Puesta en marcha
 
-### 3.0 Este equipo (instancia `SQLEXPRESS01`, base `prueba`)
+### 3.0 Elegir instancia y base (cualquier SQL Express)
 
-La base `prueba` ya existe y tiene las 12 tablas de SALCI más la tabla
-original del curso, conservada como `productos_antiguo`. `app/config.local.php`
-(ignorado por Git) contiene:
+Por defecto `app/config.php` usa `.\SQLEXPRESS` y la base `SALCI`. Si tu equipo
+tiene otra instancia (por ejemplo `SQLEXPRESS01`) u otra base (por ejemplo
+`prueba`), **no edites** `config.php`: copia la plantilla y ajusta solo tu
+archivo local:
+
+```bat
+copy app\config.local.php.example app\config.local.php
+```
 
 ```php
-define('DB_DSN', 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
-define('JWT_SECRET', 'clave-generada-en-este-equipo');
+define('DB_DSN', 'sqlsrv:Server=.\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
+define('JWT_SECRET', 'PEG-AQUI-LA-CLAVE-QUE-GENERES');
 ```
 
-Para volver a dejar el demo limpio después de una presentación:
+Generar la clave de firma (obligatoria; no se versiona):
+
+```bat
+C:\xampp\php\php.exe -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
+
+Pegar el resultado en `JWT_SECRET` dentro de `app/config.local.php`. Si falta o
+sigue el valor de ejemplo, la aplicación muestra un error con la causa y la
+acción correctiva.
+
+Para comprobar la instalación sin fijar nada a mano:
 
 ```powershell
-cd "C:\Users\aleks\Documents\SALCI-2"
-$sql = (Get-Content db\02_seed.sql -Raw) -replace 'USE SALCI;', 'USE prueba;'
-$tmp = Join-Path $env:TEMP 'seed_prueba.sql'
-$sql | Set-Content $tmp -Encoding utf8
-sqlcmd -S .\SQLEXPRESS01 -E -C -b -f 65001 -i $tmp
+powershell -ExecutionPolicy Bypass -File verificar_rnf.ps1
+
+# También se puede indicar de forma explícita:
+powershell -ExecutionPolicy Bypass -File verificar_rnf.ps1 -ServerInstance '.\SQLEXPRESS01' -Database prueba
 ```
 
-El seed reinicia los `IDENTITY`, así que los productos vuelven a quedar con
-IDs 1–8 en cada recarga. Si vienes de una versión anterior del proyecto,
-aplica antes las migraciones `05` a `09` (mismo reemplazo `USE SALCI;` →
-`USE prueba;`).
+El script lee `DB_DSN`, comprueba que responda y, si no, prueba
+`.\SQLEXPRESS`, `.\SQLEXPRESS01`, `(local)\SQLEXPRESS` y
+`localhost\SQLEXPRESS`; usa la primera base `SALCI`/`prueba` disponible (o la
+primera base de usuario que encuentre).
+
+Para dejar el demo limpio, reemplaza `USE SALCI;` por el nombre de tu base en
+una copia temporal del seed:
+
+```powershell
+$server = '.\SQLEXPRESS'
+$db     = 'SALCI'
+$sql = (Get-Content db\02_seed.sql -Raw).Replace('USE SALCI;', "USE $db;")
+$tmp = Join-Path $env:TEMP 'seed_salci.sql'
+$sql | Set-Content $tmp -Encoding utf8
+sqlcmd -S $server -E -C -b -f 65001 -i $tmp
+```
+
+Si vienes de una versión anterior, aplica antes las migraciones `05` a `11`
+con el mismo reemplazo `USE SALCI;` → `USE <tu-base>;`.
 
 ### 3.1 Instalación nueva (otro equipo)
 
@@ -172,7 +201,7 @@ Es útil antes de una presentación; no ejecutar sobre datos reales.
 Apache de XAMPP sirve la carpeta `app/` mediante una unión de directorios:
 
 ```
-C:\xampp\htdocs\salci  ->  C:\Users\aleks\Documents\SALCI-2\app
+C:\xampp\htdocs\salci  ->  C:\ruta\completa\SALCI-2\app
 ```
 
 Con Apache iniciado, abrir:
@@ -191,7 +220,7 @@ RNF implementados (detalle y comprobación en [`docs/rnf.md`](docs/rnf.md)):
 | RNF01 | < 500 ms medidos con `X-Response-Time-Ms` | cabecera HTTP en cada respuesta y panel |
 | RNF02 | FK/CHECK nativos + transacciones `op_tx()` | `db/10_verificacion_rnf.sql` |
 | RNF03 | SHA-256 con sal + JWT HS256 de 24 h | login y "Token RF05" del panel |
-| RNF04 | 99,9% + monitor público `GET /health` | `http://localhost/salci/health.php` |
+| RNF04 | 99,9% + monitor público `GET /salci/health.php` | `http://localhost/salci/health.php` |
 | RNF05 | Índices B-Tree en `sku`, `sucursal_id`, `username` | `db/10_verificacion_rnf.sql` |
 | RNF06 | Causa + acción en errores; responsive slate-blue | avisos y botón ◐/◑ |
 
@@ -206,13 +235,13 @@ críticas en rojo, alertas, las consultas 1:N y N:N, kardex y links de descarga.
 Si la unión no existe (por ejemplo, en otro equipo):
 
 ```bat
-mklink /J "C:\xampp\htdocs\salci" "C:\Users\aleks\Documents\SALCI-2\app"
+mklink /J "C:\xampp\htdocs\salci" "C:\ruta\completa\SALCI-2\app"
 ```
 
 Alternativa sin Apache (servidor embebido de PHP):
 
 ```bat
-C:\xampp\php\php.exe -S 127.0.0.1:8080 -t "C:\Users\aleks\Documents\SALCI-2\app"
+C:\xampp\php\php.exe -S 127.0.0.1:8080 -t "C:\ruta\completa\SALCI-2\app"
 ```
 
 y abrir `http://127.0.0.1:8080/login.php`.
@@ -271,10 +300,11 @@ CONVERT(CHAR(64), HASHBYTES('SHA2_256',
 ## 5. Conexión desde PHP
 
 ```php
-// Este equipo (config.local.php):
-$dsn = 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1';
-// En una instalación nueva: sqlsrv:Server=.\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1
-$pdo = new PDO($dsn, null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+// config.php (valor por defecto):
+// define('DB_DSN', 'sqlsrv:Server=.\\SQLEXPRESS;Database=SALCI;TrustServerCertificate=1');
+// config.local.php (ejemplo para otra instancia):
+// define('DB_DSN', 'sqlsrv:Server=.\\SQLEXPRESS01;Database=prueba;TrustServerCertificate=1');
+$pdo = new PDO(DB_DSN, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
 ```
 
 > No pasar `PDO::ATTR_TIMEOUT` ni `PDO::ATTR_PERSISTENT` en el constructor:
@@ -398,20 +428,21 @@ se revierte.
 ## 8. Respaldo
 
 `db/04_backup.sql` genera y verifica el respaldo en la carpeta que informa la
-propia instancia (`SERVERPROPERTY('InstanceDefaultBackupPath')`), sin ruta
-fija de `MSSQL17`. En este equipo se puede respaldar la base `prueba` con:
+propia instancia (`SERVERPROPERTY('InstanceDefaultBackupPath')`), sin ruta fija
+de `MSSQL17`. Si tu base se llama distinto, reemplaza el token `SALCI` en una
+copia temporal:
 
-```bat
-sqlcmd -S .\SQLEXPRESS01 -E -C -Q "BACKUP DATABASE prueba TO DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS01\MSSQL\Backup\prueba.bak' WITH INIT, CHECKSUM"
+```powershell
+$server = '.\SQLEXPRESS'
+$db     = 'SALCI'
+$sql = (Get-Content db\04_backup.sql -Raw).Replace('SALCI', $db)
+$tmp = Join-Path $env:TEMP 'backup_salci.sql'
+$sql | Set-Content $tmp -Encoding utf8
+sqlcmd -S $server -E -C -b -f 65001 -i $tmp
 ```
 
-Para restaurarla:
-
-```bat
-sqlcmd -S .\SQLEXPRESS01 -E -C -Q "ALTER DATABASE prueba SET SINGLE_USER WITH ROLLBACK IMMEDIATE"
-sqlcmd -S .\SQLEXPRESS01 -E -C -Q "RESTORE DATABASE prueba FROM DISK = 'C:\Program Files\Microsoft SQL Server\MSSQL17.SQLEXPRESS01\MSSQL\Backup\prueba.bak' WITH REPLACE, RECOVERY"
-sqlcmd -S .\SQLEXPRESS01 -E -C -Q "ALTER DATABASE prueba SET MULTI_USER"
-```
+El bloque de restauración comentado al final del mismo archivo usa el mismo
+nombre de base; descoméntalo y ejecútalo solo cuando sea necesario.
 
 > SQL Server Express **no** soporta `BACKUP ... WITH COMPRESSION`.
 > La carpeta de respaldos requiere permisos de administrador para copiar

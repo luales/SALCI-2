@@ -61,7 +61,7 @@ try {
 
             if ($admins <= 1) {
                 throw new RuntimeException(
-                    'No se puede quitar el rol al último administrador activo (RF06).'
+                    'No se puede quitar el rol al último administrador activo.'
                 );
             }
         }
