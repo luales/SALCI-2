@@ -609,6 +609,7 @@ button:active {
 /* ---------- Secciones de detalle ---------- */
 
 .detalle {
+    margin: 20px;
     padding: 18px 20px;
 }
 

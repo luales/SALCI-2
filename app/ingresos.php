@@ -71,13 +71,9 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 2 (1:N) · RF04/RF08</p>
+           
             <h1>Ingresos de mercadería</h1>
-            <p>
-                Contexto: <strong><?= e($ctx['nombre']) ?></strong>. Cada ingreso
-                crea un lote opcional, incrementa el inventario y deja su asiento
-                en el kardex.
-            </p>
+           
         </section>
 
         <?php render_flash_op(); ?>
@@ -117,7 +113,7 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
                         <input type="hidden" name="sucursal_id" value="<?= $suc ?>">
                     <?php endif; ?>
 
-                    <label for="cantidad">Cantidad (entero > 0)</label>
+                    <label for="cantidad">Cantidad</label>
                     <input id="cantidad" name="cantidad" type="number" min="1" step="1" required>
                 <?php endif; ?>
 
@@ -136,7 +132,7 @@ $v = static fn(string $k): string => (string) ($lote[$k] ?? '');
                 <input id="numero_lote" name="numero_lote" type="text" maxlength="50"
                        value="<?= e($v('numero_lote')) ?>">
 
-                <label for="fecha_ingreso">Fecha de recepción (opcional; si se omite se usa hoy)</label>
+                <label for="fecha_ingreso">Fecha de recepción (opcional; si se omite se usa la fecha de hoy)</label>
                 <input id="fecha_ingreso" name="fecha_ingreso" type="date"
                        value="<?= e(substr($v('fecha_ingreso') ?: $hoy, 0, 10)) ?>">
 

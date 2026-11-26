@@ -131,22 +131,15 @@ $top5 = top5_informe($pdo, $sucId);
                 <dt>Versión</dt>
                 <dd class="mono"><?= e($version) ?></dd>
                 <dt>Token (JWT HS256)</dt>
-                <dd class="mono">firmado · expira <?= e($tokenExp) ?></dd>
-                <dt>RNF01 · Tiempo de respuesta</dt>
+                <dd class="mono">firmado y expira <?= e($tokenExp) ?></dd>
+                <dt> Tiempo de respuesta</dt>
                 <dd><?= number_format(salci_response_ms(), 2, ',', '.') ?> ms ·
                     cabecera <code>X-Response-Time-Ms</code> (objetivo &lt; 500 ms)</dd>
-                <dt> · Monitoreo</dt>
+                <dt>Monitoreo</dt>
                 <dd><a href="health.php">health.php</a> ·
                     <code>GET /health</code> · disponibilidad objetivo 99,9%</dd>
             </dl>
-            <p class="nota">
-                Si ves esta pantalla, PHP está hablando con SQL Server y la
-                sesión quedó autenticada contra la tabla <code>usuarios</code>. 
-                usa las claves foráneas nativas de SQL Server (equivalente
-                a <code>PRAGMA foreign_keys=ON</code>), apoya las búsquedas
-                en índices B-Tree de <code>sku</code>, <code>sucursal_id</code> y
-                <code>username</code>, e informa causa + acción en cada error.
-            </p>
+            
         </section>
 
         <section class="detalle">

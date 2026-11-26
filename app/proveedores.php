@@ -59,10 +59,7 @@ $v = static fn(string $k): string => (string) ($proveedor[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla 2 (1:N) · RF08</p>
             <h1>Proveedores</h1>
-            <p>Cada proveedor puede tener muchos lotes. Los datos de contraparte
-               viven aquí y no se repiten en el kardex.</p>
         </section>
 
         <?php render_flash_op(); ?>
@@ -74,7 +71,7 @@ $v = static fn(string $k): string => (string) ($proveedor[$k] ?? '');
                     <input type="hidden" name="csrf" value="<?= e(csrf_token()) ?>">
                     <input type="hidden" name="id" value="<?= (int) ($proveedor['id'] ?? 0) ?>">
 
-                    <label for="rut">RUT (opcional, único)</label>
+                    <label for="rut">RUT</label>
                     <input id="rut" name="rut" type="text" maxlength="12"
                            value="<?= e($v('rut')) ?>" placeholder="12.345.678-9">
 

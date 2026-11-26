@@ -48,13 +48,9 @@ $ventas = $st->fetchAll();
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · tabla de transacciones N:N · RF15</p>
+            <p class="eyebrow"></p>
             <h1>Ventas registradas</h1>
-            <p>
-                <code>ventas</code> se relaciona con <code>productos</code> a través de
-                <code>venta_detalle</code>. Alta: POS · lectura: este listado y el ticket ·
-                baja: anulación con reversa de stock.
-            </p>
+            
         </section>
 
         <?php render_flash_op(); ?>
@@ -119,10 +115,6 @@ $ventas = $st->fetchAll();
             </div>
         </section>
 
-        <p class="nota">
-            Anular devuelve cada línea al inventario con un movimiento
-            <code>AJUSTE</code> y conserva la venta como <code>ANULADA</code> para auditoría.
-        </p>
     </main>
 </body>
 </html>

@@ -49,9 +49,9 @@ $v = static fn(string $k): string => (string) ($sucursal[$k] ?? '');
 
     <main class="panel panel-ancho">
         <section class="bienvenida">
-            <p class="eyebrow">CRUD · RF07</p>
+            <p class="eyebrow"></p>
             <h1>Sucursales físicas</h1>
-            <p>Alta, edición y deshabilitación de sedes. No se puede eliminar una
+            <p>No se puede eliminar una
                sucursal con usuarios asignados, existencias o movimientos.</p>
         </section>
 

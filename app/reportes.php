@@ -87,13 +87,8 @@ foreach ($top5 as $t) {
 
     <main class="panel panel-ancho reportes">
         <section class="bienvenida">
-            <p class="eyebrow">RFF--FFF</p>
+            <p class="eyebrow"></p>
             <h1>Reportes y stock en vivo</h1>
-            <p>
-                Indicadores del dashboard, catálogo con semáforo de stock crítico
-                y exportación. Contexto:
-                <strong><?= e($ctx['sucursal_nombre']) ?></strong>.
-            </p>
         </section>
 
         <?php if ($ctx['es_admin']): ?>
@@ -153,10 +148,7 @@ foreach ($top5 as $t) {
 
         <section class="detalle seccion">
             <h2>Stock en vivo</h2>
-            <p class="nota">
-                Las filas en rojo tienen saldo igual o inferior al mínimo.
-                Esta es la consulta del script <code>03_queries.sql</code>.
-            </p>
+           
             <?php render_tabla($hStock, $stock); ?>
             <p class="descargas">
                 <?php descarga_csv('stock', $suc, 'Descargar stock CSV'); ?>
@@ -185,10 +177,6 @@ foreach ($top5 as $t) {
             </p>
         </details>
 
-        <p class="nota">
-            Los CSV se generan con separador <code>;</code>, y respetan
-            el filtro de sucursal del usuario.
-        </p>
     </main>
 </body>
 </html>

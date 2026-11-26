@@ -51,10 +51,7 @@ $productos = $st->fetchAll();
         <section class="bienvenida">
             <p class="eyebrow"></p>
             <h1>Catálogo de productos</h1>
-            <p>
-                Contexto: <strong><?= e($ctx['nombre']) ?></strong>.
-                El catálogo es global; el stock se consulta por sucursal.
-            </p>
+           
         </section>
 
         <?php render_flash_op(); ?>
@@ -140,10 +137,6 @@ $productos = $st->fetchAll();
             </div>
         </section>
 
-        <p class="nota">
-            La baja es lógica (<code>activo = 0</code>): conserva el historial de ventas,
-            lotes y movimientos.
-        </p>
     </main>
 </body>
 </html>
