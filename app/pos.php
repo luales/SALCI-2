@@ -521,13 +521,9 @@ $compradorNombre = $compradorActual !== null
 
     <main class="panel panel-ancho pos">
         <section class="bienvenida">
-            <p class="eyebrow">RF15 · Venta POS</p>
+        
             <h1>Punto de venta</h1>
-            <p>
-                Venta rápida en <strong><?= e($sucursalNombre) ?></strong>.
-                Al cobrar se descuenta el stock y se registra el movimiento en el kardex
-                dentro de la misma transacción.
-            </p>
+          
         </section>
 
         <?php if ($flash !== null): ?>
